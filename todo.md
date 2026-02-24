@@ -57,8 +57,8 @@
 - [x] Create leadership development module structure
 - [ ] Implement role-specific content delivery
 
-## Phase 7: Testing & Optimization
-- [ ] Write Vitest tests for core procedures
+## PHASE 7: Testing & Optimization
+- [x] Write Vitest tests for core procedures (7 tests passing)
 - [ ] Test candidate funnel end-to-end
 - [ ] Test dashboard functionality
 - [ ] Mobile responsiveness testing
@@ -85,6 +85,28 @@
 - [ ] Create solar education section in onboarding
 - [x] Update all branding across all pages and components
 
+
+## PHASE 2: BACKEND INFRASTRUCTURE & DATABASE INTEGRATION
+- [x] Create tRPC procedures for applicant submission (createApplicant)
+- [x] Create tRPC procedures for resume upload (uploadResume)
+- [x] Create tRPC procedures for applicant retrieval (getApplicants, getApplicantById)
+- [x] Create tRPC procedures for applicant status updates (updateApplicantStatus)
+- [ ] Create tRPC procedures for interview scheduling (scheduleInterview)
+- [x] Implement S3 resume storage integration
+- [x] Create database helper functions in server/db.ts
+- [x] Add form validation on backend
+- [x] Implement error handling and logging
+- [x] Create database queries for dashboard filtering
+
+## PHASE 3: FRONTEND-BACKEND INTEGRATION
+- [x] Connect Apply form to createApplicant procedure
+- [x] Implement resume upload with S3 integration
+- [x] Add loading states and error handling
+- [ ] Connect Dashboard to getApplicants procedure
+- [ ] Implement real-time applicant data display
+- [ ] Add applicant detail view with full profile
+- [ ] Implement status update functionality
+- [ ] Add search and filtering on dashboard
 
 ## EXPERT RECRUITING BEST PRACTICES INTEGRATION
 - [x] Add "Why Hire Through Us?" section highlighting agency benefits (access to hidden talent, time/cost efficiency, market intelligence, reduced risk)

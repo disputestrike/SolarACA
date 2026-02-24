@@ -6,12 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowRight, Upload, CheckCircle } from "lucide-react";
+import { ArrowRight, Upload, CheckCircle, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 type Step = "info" | "experience" | "motivation" | "resume" | "success";
 
 export default function Apply() {
   const [step, setStep] = useState<Step>("info");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -22,6 +24,8 @@ export default function Apply() {
     motivation: "",
     resume: null as File | null,
   });
+
+  const submitMutation = trpc.applicants.submit.useMutation();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -38,7 +42,13 @@ export default function Apply() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      setFormData((prev) => ({ ...prev, resume: e.target.files![0] }));
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Resume must be less than 5MB");
+        return;
+      }
+      setFormData((prev) => ({ ...prev, resume: file }));
+      toast.success("Resume selected");
     }
   };
 
@@ -46,6 +56,15 @@ export default function Apply() {
     if (step === "info") {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.city) {
         toast.error("Please fill in all fields");
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error("Please enter a valid email");
+        return false;
+      }
+      if (formData.phone.replace(/\D/g, "").length < 10) {
+        toast.error("Please enter a valid phone number");
         return false;
       }
     }
@@ -84,9 +103,43 @@ export default function Apply() {
 
   const handleSubmit = async () => {
     if (step === "resume") {
-      // TODO: Submit form data to backend
-      toast.success("Application submitted successfully!");
-      setStep("success");
+      setIsSubmitting(true);
+      try {
+        let resumeBase64: string | undefined;
+        let resumeFileName: string | undefined;
+
+        if (formData.resume) {
+          const reader = new FileReader();
+          resumeBase64 = await new Promise((resolve) => {
+            reader.onload = () => {
+              const result = reader.result as string;
+              resolve(result.split(",")[1]);
+            };
+            reader.readAsDataURL(formData.resume!);
+          });
+          resumeFileName = formData.resume.name;
+        }
+
+        await submitMutation.mutateAsync({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          city: formData.city as "Tampa" | "Miami" | "Fort Lauderdale",
+          experienceLevel: formData.experienceLevel as "solar_sales" | "outside_sales" | "entry_level" | "aspiring_leader",
+          motivation: formData.motivation,
+          resumeBase64,
+          resumeFileName,
+        });
+
+        toast.success("Application submitted successfully!");
+        setStep("success");
+      } catch (error) {
+        console.error("Submission error:", error);
+        toast.error("Failed to submit application. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -98,16 +151,16 @@ export default function Apply() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">Join Florida Solar Academy</h1>
-          <p className="text-muted-foreground">
-            {step === "success"
-              ? "Thank you for applying!"
-              : `Step ${["info", "experience", "motivation", "resume"].indexOf(step) + 1} of 4`}
-          </p>
+          <p className="text-muted-foreground">Start your journey to financial freedom and leadership</p>
         </div>
 
         {/* Progress Bar */}
         {step !== "success" && (
           <div className="mb-8">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-medium">Progress</span>
+              <span className="text-sm text-muted-foreground">{Math.round(progressPercentage)}%</span>
+            </div>
             <div className="w-full bg-muted rounded-full h-2">
               <div
                 className="bg-primary h-2 rounded-full transition-all duration-300"
@@ -119,15 +172,16 @@ export default function Apply() {
 
         {/* Form Card */}
         <Card className="p-8 border-border">
+          {/* Step 1: Basic Info */}
           {step === "info" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Let&apos;s start with your basics</h2>
-                <p className="text-muted-foreground mb-6">We&apos;ll use this to contact you about your application.</p>
+                <h2 className="text-2xl font-bold mb-4">Let's Start with Your Information</h2>
+                <p className="text-muted-foreground mb-6">We'll use this to contact you about your application</p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
                     id="firstName"
@@ -137,7 +191,7 @@ export default function Apply() {
                     placeholder="John"
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
                     id="lastName"
@@ -149,7 +203,7 @@ export default function Apply() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -161,176 +215,221 @@ export default function Apply() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
                   name="phone"
+                  type="tel"
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="(555) 123-4567"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="city">Which Florida city are you in?</Label>
+              <div>
+                <Label htmlFor="city">Which city are you in?</Label>
                 <Select value={formData.city} onValueChange={handleCityChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a city" />
+                  <SelectTrigger id="city">
+                    <SelectValue placeholder="Select your city" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Tampa">Tampa</SelectItem>
                     <SelectItem value="Miami">Miami</SelectItem>
                     <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
-                    <SelectItem value="Other">Other Florida City</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           )}
 
+          {/* Step 2: Experience Level */}
           {step === "experience" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Tell us about your experience</h2>
-                <p className="text-muted-foreground mb-6">
-                  We welcome everyone from solar pros to complete beginners.
-                </p>
+                <h2 className="text-2xl font-bold mb-4">Your Experience</h2>
+                <p className="text-muted-foreground mb-6">We train everyone, but we want to understand where you're starting from</p>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="experience">What&apos;s your background?</Label>
-                  <Select value={formData.experienceLevel} onValueChange={handleSelectChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your experience level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="solar_sales">Solar Sales Experience</SelectItem>
-                      <SelectItem value="outside_sales">Outside Sales (Other Industry)</SelectItem>
-                      <SelectItem value="entry_level">New to Sales</SelectItem>
-                      <SelectItem value="aspiring_leader">Aspiring Leader/Manager</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <Select value={formData.experienceLevel} onValueChange={handleSelectChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your experience level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solar_sales">Solar Sales Professional</SelectItem>
+                  <SelectItem value="outside_sales">Outside Sales (Other Industry)</SelectItem>
+                  <SelectItem value="entry_level">Entry Level / New to Sales</SelectItem>
+                  <SelectItem value="aspiring_leader">Aspiring Leader / Manager</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <div className="bg-primary/10 p-4 rounded-lg">
+              <div className="bg-primary/5 p-4 rounded-lg">
                 <p className="text-sm text-foreground">
-                  <strong>No experience needed!</strong> We provide comprehensive training for all levels, from solar product knowledge to leadership development.
+                  <strong>Pro Tip:</strong> We provide comprehensive training in solar technology, sales techniques, and leadership development. Your starting point doesn't limit your earning potential.
                 </p>
               </div>
             </div>
           )}
 
+          {/* Step 3: Motivation */}
           {step === "motivation" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">What drives you?</h2>
-                <p className="text-muted-foreground mb-6">
-                  Help us understand your goals and what motivates you to pursue a career in solar sales.
-                </p>
+                <h2 className="text-2xl font-bold mb-4">Why Solar?</h2>
+                <p className="text-muted-foreground mb-6">Tell us what excites you about this opportunity</p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="motivation">Tell us about your motivation</Label>
+              <div>
+                <Label htmlFor="motivation">Your Motivation</Label>
                 <Textarea
                   id="motivation"
                   name="motivation"
                   value={formData.motivation}
                   onChange={handleInputChange}
-                  placeholder="I'm interested in solar sales because... I want to earn $100k+ and build my own team... I'm passionate about renewable energy..."
+                  placeholder="I'm excited about earning six figures, building my own team, and making an impact on Florida's clean energy future..."
                   rows={6}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {formData.motivation.length} characters (minimum 20)
+                <p className="text-xs text-muted-foreground mt-2">
+                  {formData.motivation.length} / 20 characters minimum
                 </p>
               </div>
 
-              <div className="bg-secondary/10 p-4 rounded-lg">
-                <p className="text-sm text-foreground">
-                  <strong>Tip:</strong> Share your genuine goals. We&apos;re looking for motivated individuals who want financial freedom, leadership opportunities, and to make an impact.
-                </p>
+              <div className="bg-primary/5 p-4 rounded-lg space-y-2">
+                <p className="text-sm font-semibold">What we're looking for:</p>
+                <ul className="text-sm text-foreground space-y-1">
+                  <li>✓ Drive to earn significant income</li>
+                  <li>✓ Interest in building a team</li>
+                  <li>✓ Commitment to learning</li>
+                  <li>✓ Passion for clean energy</li>
+                </ul>
               </div>
             </div>
           )}
 
+          {/* Step 4: Resume */}
           {step === "resume" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Upload your resume</h2>
-                <p className="text-muted-foreground mb-6">
-                  (Optional - but it helps us learn more about you)
+                <h2 className="text-2xl font-bold mb-4">Your Resume (Optional)</h2>
+                <p className="text-muted-foreground mb-6">Upload your resume so we can learn more about your background</p>
+              </div>
+
+              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
+                onClick={() => document.getElementById("resume-input")?.click()}>
+                <Upload className="mx-auto mb-2 text-muted-foreground" size={32} />
+                <p className="font-semibold mb-1">
+                  {formData.resume ? formData.resume.name : "Click to upload or drag and drop"}
                 </p>
+                <p className="text-sm text-muted-foreground">PDF, DOC, or DOCX (Max 5MB)</p>
               </div>
 
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition cursor-pointer">
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="resume-upload"
-                />
-                <label htmlFor="resume-upload" className="cursor-pointer">
-                  <Upload className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-                  <p className="font-medium">
-                    {formData.resume ? formData.resume.name : "Click to upload or drag and drop"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (max 10MB)</p>
-                </label>
-              </div>
+              <input
+                id="resume-input"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={handleFileChange}
+                className="hidden"
+              />
 
-              <div className="bg-muted/50 p-4 rounded-lg">
+              <div className="bg-primary/5 p-4 rounded-lg">
                 <p className="text-sm text-foreground">
-                  <strong>Don&apos;t have a resume?</strong> That&apos;s okay! We can work with you. Your motivation and drive matter more than a perfect resume.
+                  <strong>Not required:</strong> We're more interested in your drive and potential than your past experience. If you don't have a resume ready, you can still proceed.
                 </p>
               </div>
             </div>
           )}
 
+          {/* Step 5: Success */}
           {step === "success" && (
             <div className="text-center space-y-6">
-              <CheckCircle className="h-16 w-16 text-primary mx-auto" />
+              <CheckCircle className="mx-auto text-primary" size={64} />
               <div>
                 <h2 className="text-2xl font-bold mb-2">Application Submitted!</h2>
                 <p className="text-muted-foreground mb-4">
-                  Thank you for applying to Florida Solar Academy. We&apos;re excited to learn more about you and your potential.
+                  Thank you, {formData.firstName}! We've received your application.
                 </p>
               </div>
 
-              <div className="bg-primary/10 p-6 rounded-lg space-y-2">
-                <p className="font-medium">What&apos;s next?</p>
-                <p className="text-sm text-muted-foreground">
-                  We&apos;ll review your application and contact you within 24 hours to schedule an interview. Keep an eye on your email and phone.
-                </p>
+              <div className="bg-primary/5 p-6 rounded-lg space-y-3 text-left">
+                <p className="font-semibold">What happens next:</p>
+                <div className="space-y-2">
+                  <div className="flex gap-3">
+                    <span className="font-bold text-primary">1.</span>
+                    <div>
+                      <p className="font-semibold">24-48 Hour Review</p>
+                      <p className="text-sm text-muted-foreground">We'll review your application</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="font-bold text-primary">2.</span>
+                    <div>
+                      <p className="font-semibold">Phone Screen</p>
+                      <p className="text-sm text-muted-foreground">We'll call you to discuss the role and your goals</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="font-bold text-primary">3.</span>
+                    <div>
+                      <p className="font-semibold">Offer & Training</p>
+                      <p className="text-sm text-muted-foreground">If it's a fit, we'll send an offer and start your training</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Questions? Contact us at <strong>info@floridasolaracademy.com</strong> or <strong>(555) 123-4567</strong>
-                </p>
-              </div>
+              <p className="text-muted-foreground">
+                We'll contact you at <strong>{formData.email}</strong> and <strong>{formData.phone}</strong>
+              </p>
+
+              <Button
+                size="lg"
+                onClick={() => window.location.href = "/"}
+                className="w-full"
+              >
+                Return to Home
+              </Button>
             </div>
           )}
 
           {/* Navigation Buttons */}
           {step !== "success" && (
-            <div className="flex gap-4 mt-8 justify-between">
-              <Button
-                variant="outline"
-                onClick={handlePrev}
-                disabled={step === "info"}
-                className="border-border"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={step === "resume" ? handleSubmit : handleNext}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {step === "resume" ? "Submit Application" : "Next"} <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+            <div className="flex gap-4 mt-8">
+              {step !== "info" && (
+                <Button
+                  variant="outline"
+                  onClick={handlePrev}
+                  disabled={isSubmitting}
+                >
+                  Back
+                </Button>
+              )}
+              {step !== "resume" && (
+                <Button
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                  className="ml-auto"
+                >
+                  Next <ArrowRight className="ml-2" size={16} />
+                </Button>
+              )}
+              {step === "resume" && (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="ml-auto"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 animate-spin" size={16} />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Application <ArrowRight className="ml-2" size={16} />
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           )}
         </Card>
