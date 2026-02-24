@@ -119,7 +119,7 @@ export default function Dashboard() {
       <header className="bg-background border-b border-border sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Recruitment Dashboard</h1>
+            <h1 className="text-2xl font-bold text-primary">Florida Solar Academy - Recruitment Dashboard</h1>
             <p className="text-sm text-muted-foreground">
               Welcome, {user?.name || "Owner"}
             </p>

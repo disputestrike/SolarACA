@@ -97,7 +97,7 @@ export default function Apply() {
       <div className="container mx-auto max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Join Our Team</h1>
+          <h1 className="text-4xl font-bold mb-2">Join Florida Solar Academy</h1>
           <p className="text-muted-foreground">
             {step === "success"
               ? "Thank you for applying!"
@@ -295,7 +295,7 @@ export default function Apply() {
               <div>
                 <h2 className="text-2xl font-bold mb-2">Application Submitted!</h2>
                 <p className="text-muted-foreground mb-4">
-                  Thank you for applying to Dave&apos;s Solar Sales Academy. We&apos;re excited to learn more about you.
+                  Thank you for applying to Florida Solar Academy. We&apos;re excited to learn more about you and your potential.
                 </p>
               </div>
 
@@ -308,7 +308,7 @@ export default function Apply() {
 
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Questions? Contact us at <strong>info@davessolar.com</strong> or <strong>(555) 123-4567</strong>
+                  Questions? Contact us at <strong>info@floridasolaracademy.com</strong> or <strong>(555) 123-4567</strong>
                 </p>
               </div>
             </div>

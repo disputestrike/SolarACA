@@ -110,9 +110,9 @@ export default function Onboarding() {
       {/* Header */}
       <header className="bg-background border-b border-border sticky top-0 z-40">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Your Onboarding Journey</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">Florida Solar Academy - Your Onboarding Journey</h1>
           <p className="text-muted-foreground">
-            Complete training modules to become a solar sales expert
+            Complete training modules to become a solar sales expert and industry leader
           </p>
         </div>
       </header>

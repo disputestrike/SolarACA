@@ -73,3 +73,14 @@
 - [ ] Candidate scoring system
 - [ ] Team management and sub-accounts
 - [ ] Integration with payroll/commission tracking
+
+## REDESIGN PHASE: Branding, Content & Visual Improvements
+- [x] Rebrand from "Dave's Solar Academy" to "Florida Solar Academy"
+- [x] Strengthen color palette (move to deeper, more professional solar/energy colors)
+- [x] Add solar industry education content (panels, efficiency, ROI, sustainability)
+- [x] Integrate sustainability impact messaging (carbon reduction, energy independence)
+- [x] Add solar market context and industry trends
+- [x] Include solar technology explainers on landing page
+- [ ] Add solar-specific knowledge questions to application funnel
+- [ ] Create solar education section in onboarding
+- [x] Update all branding across all pages and components
