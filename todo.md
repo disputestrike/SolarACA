@@ -84,3 +84,16 @@
 - [ ] Add solar-specific knowledge questions to application funnel
 - [ ] Create solar education section in onboarding
 - [x] Update all branding across all pages and components
+
+
+## EXPERT RECRUITING BEST PRACTICES INTEGRATION
+- [x] Add "Why Hire Through Us?" section highlighting agency benefits (access to hidden talent, time/cost efficiency, market intelligence, reduced risk)
+- [ ] Create candidate qualification scoring system (assess sales experience, motivation, cultural fit)
+- [ ] Add market intelligence section (salary benchmarks, demand trends, competitive positioning)
+- [x] Implement risk mitigation messaging (replacement guarantee, 60-90 day trial period)
+- [ ] Build candidate pipeline management (track passive candidates, engagement history)
+- [x] Add testimonials from successful team leaders showing real earnings and growth
+- [x] Create "What's Next?" timeline showing interview, offer, training, and earning milestones
+- [x] Add proactive outreach messaging (we find you, not just wait for applications)
+- [ ] Implement candidate engagement tracking (email opens, page visits, application progress)
+- [ ] Create follow-up automation for passive candidates

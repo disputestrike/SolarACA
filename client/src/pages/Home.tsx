@@ -307,6 +307,104 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Why Hire Through Us */}
+      <section className="py-16 px-4 bg-background">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Why Hire Through Florida Solar Academy?
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="p-8 border-border">
+              <h3 className="text-xl font-bold mb-4 text-primary">Access to Hidden Talent</h3>
+              <p className="text-muted-foreground">
+                The best sales professionals are not on job boards. They are heads-down hitting quota. We have built relationships with thousands of high-performing reps across Florida. We find you talent you would never discover through traditional channels.
+              </p>
+            </Card>
+            <Card className="p-8 border-border">
+              <h3 className="text-xl font-bold mb-4 text-primary">Time & Cost Efficiency</h3>
+              <p className="text-muted-foreground">
+                A bad sales hire costs $240,000+ when you account for salary, ramp time, and lost pipeline. We save you weeks of resume screening and no-shows. Our vetting process means only top candidates reach you.
+              </p>
+            </Card>
+            <Card className="p-8 border-border">
+              <h3 className="text-xl font-bold mb-4 text-primary">Market Intelligence</h3>
+              <p className="text-muted-foreground">
+                We know what salaries are clearing, which skills are in demand, and how competitors are structuring offers. Real-time market insights ensure you are competitive and informed.
+              </p>
+            </Card>
+            <Card className="p-8 border-border">
+              <h3 className="text-xl font-bold mb-4 text-primary">Reduced Risk</h3>
+              <p className="text-muted-foreground">
+                We stand behind our hires. If a candidate does not work out in the first 60-90 days, we find you a replacement. Your success is our success.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* What is Next Timeline */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Your Path to Success
+          </h2>
+          <div className="space-y-6">
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-primary-foreground font-bold">
+                  1
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-2">Apply (5 minutes)</h3>
+                <p className="text-muted-foreground">
+                  Complete our quick application. Tell us about your experience, motivation, and goals.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-primary-foreground font-bold">
+                  2
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-2">Interview (24-48 hours)</h3>
+                <p className="text-muted-foreground">
+                  We will reach out to schedule a phone screen. Learn about the role, earning potential, and team culture.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-primary-foreground font-bold">
+                  3
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-2">Offer & Training (1-2 weeks)</h3>
+                <p className="text-muted-foreground">
+                  Receive your offer. Start comprehensive training on solar technology, sales techniques, and industry best practices.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0">
+                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-primary-foreground font-bold">
+                  4
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold mb-2">Launch & Earn (Week 3+)</h3>
+                <p className="text-muted-foreground">
+                  Hit the field. Start closing deals and building your team. Your earnings grow with your performance.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-r from-primary to-secondary/80 text-primary-foreground">
         <div className="container mx-auto max-w-3xl text-center space-y-6">
