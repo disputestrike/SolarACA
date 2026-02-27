@@ -25,16 +25,16 @@
 - [x] Implement form validation and error handling
 - [x] Add progress indicator
 - [x] Create success confirmation page
-- [ ] Integrate S3 storage for resume uploads
+- [x] Integrate S3 storage for resume uploads
 
 ## Phase 4: Owner Dashboard
 - [x] Build dashboard layout with sidebar navigation
 - [x] Create Kanban board component (New, Screened, Interviewed, Offered, Hired)
 - [x] Implement applicant card with key info
 - [x] Add filtering by experience level and status
-- [ ] Create applicant detail view with full profile
+- [x] Create applicant detail view with full profile
 - [x] Add search functionality
-- [ ] Implement drag-and-drop between columns
+- [ ] Implement drag-and-drop between columns (future enhancement)
 - [x] Create analytics/metrics section
 
 ## Phase 5: Communication Hub & Offers
@@ -59,12 +59,12 @@
 
 ## PHASE 7: Testing & Optimization
 - [x] Write Vitest tests for core procedures (7 tests passing)
-- [ ] Test candidate funnel end-to-end
-- [ ] Test dashboard functionality
-- [ ] Mobile responsiveness testing
-- [ ] Performance optimization
-- [ ] Security review (data handling, authentication)
-- [ ] Create checkpoint and prepare for delivery
+- [x] Test candidate funnel end-to-end
+- [x] Test dashboard functionality
+- [x] Mobile responsiveness testing
+- [x] Performance optimization
+- [x] Security review (data handling, authentication)
+- [x] Create checkpoint and prepare for delivery
 
 ## Additional Features (Future)
 - [ ] Advanced analytics and reporting
@@ -102,11 +102,11 @@
 - [x] Connect Apply form to createApplicant procedure
 - [x] Implement resume upload with S3 integration
 - [x] Add loading states and error handling
-- [ ] Connect Dashboard to getApplicants procedure
-- [ ] Implement real-time applicant data display
-- [ ] Add applicant detail view with full profile
-- [ ] Implement status update functionality
-- [ ] Add search and filtering on dashboard
+- [x] Connect Dashboard to getApplicants procedure
+- [x] Implement real-time applicant data display
+- [x] Add applicant detail view with full profile
+- [x] Implement status update functionality
+- [x] Add search and filtering on dashboard
 
 ## EXPERT RECRUITING BEST PRACTICES INTEGRATION
 - [x] Add "Why Hire Through Us?" section highlighting agency benefits (access to hidden talent, time/cost efficiency, market intelligence, reduced risk)

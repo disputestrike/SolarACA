@@ -1,60 +1,18 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useLocation } from "wouter";
-import { LogOut, Plus, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Loader2, Mail, Phone, FileText, MapPin, LogOut } from "lucide-react";
+import { useLocation } from "wouter";
 
-interface Applicant {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  city: string;
-  experienceLevel: string;
-  status: "new" | "screened" | "interviewed" | "offered" | "hired" | "rejected";
-  createdAt: string;
-}
+type ApplicantStatus = "new" | "screened" | "interviewed" | "offered" | "hired" | "rejected";
 
-const mockApplicants: Applicant[] = [
-  {
-    id: 1,
-    firstName: "John",
-    lastName: "Smith",
-    email: "john@example.com",
-    phone: "(555) 123-4567",
-    city: "Tampa",
-    experienceLevel: "outside_sales",
-    status: "new",
-    createdAt: "2026-02-23",
-  },
-  {
-    id: 2,
-    firstName: "Sarah",
-    lastName: "Johnson",
-    email: "sarah@example.com",
-    phone: "(555) 234-5678",
-    city: "Miami",
-    experienceLevel: "solar_sales",
-    status: "screened",
-    createdAt: "2026-02-22",
-  },
-  {
-    id: 3,
-    firstName: "Mike",
-    lastName: "Davis",
-    email: "mike@example.com",
-    phone: "(555) 345-6789",
-    city: "Fort Lauderdale",
-    experienceLevel: "entry_level",
-    status: "interviewed",
-    createdAt: "2026-02-21",
-  },
-];
-
-const statusColors: Record<string, string> = {
+const statusColors: Record<ApplicantStatus, string> = {
   new: "bg-blue-100 text-blue-800",
   screened: "bg-purple-100 text-purple-800",
   interviewed: "bg-yellow-100 text-yellow-800",
@@ -63,205 +21,280 @@ const statusColors: Record<string, string> = {
   rejected: "bg-red-100 text-red-800",
 };
 
-const statusLabels: Record<string, string> = {
-  new: "New",
-  screened: "Screened",
-  interviewed: "Interviewed",
-  offered: "Offered",
-  hired: "Hired",
-  rejected: "Rejected",
-};
-
 export default function Dashboard() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [filterCity, setFilterCity] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const applicantsQuery = trpc.applicants.list.useQuery({
+    city: filterCity || undefined,
+    status: filterStatus || undefined,
+  });
+
+  const statsQuery = trpc.applicants.stats.useQuery();
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="p-8 text-center max-w-md">
-          <h1 className="text-2xl font-bold mb-4">Access Restricted</h1>
-          <p className="text-muted-foreground mb-6">
-            You need to be logged in to access the dashboard.
-          </p>
-          <Button
-            onClick={() => navigate("/")}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Go to Home
-          </Button>
+          <h1 className="text-2xl font-bold mb-4">Dashboard Access</h1>
+          <p className="text-muted-foreground mb-6">You need to be logged in to view the dashboard.</p>
+          <Button onClick={() => navigate("/")}>Return Home</Button>
         </Card>
       </div>
     );
   }
 
-  const filteredApplicants = mockApplicants.filter((app) => {
-    const matchesSearch =
-      app.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !selectedStatus || app.status === selectedStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredApplicants = (applicantsQuery.data || []).filter((app: any) =>
+    `${app.firstName} ${app.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.phone.includes(searchTerm)
+  );
 
-  const statusGroups = {
-    new: filteredApplicants.filter((a) => a.status === "new"),
-    screened: filteredApplicants.filter((a) => a.status === "screened"),
-    interviewed: filteredApplicants.filter((a) => a.status === "interviewed"),
-    offered: filteredApplicants.filter((a) => a.status === "offered"),
+  const groupedApplicants = {
+    new: filteredApplicants.filter((a: any) => a.status === "new"),
+    screened: filteredApplicants.filter((a: any) => a.status === "screened"),
+    interviewed: filteredApplicants.filter((a: any) => a.status === "interviewed"),
+    offered: filteredApplicants.filter((a: any) => a.status === "offered"),
+    hired: filteredApplicants.filter((a: any) => a.status === "hired"),
   };
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-primary">Florida Solar Academy - Recruitment Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Welcome, {user?.name || "Owner"}
-            </p>
-          </div>
-          <Button
-            onClick={() => logout()}
-            variant="outline"
-            className="border-border"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-6 border-border">
-            <p className="text-sm text-muted-foreground mb-1">Total Applications</p>
-            <p className="text-3xl font-bold text-primary">{mockApplicants.length}</p>
-          </Card>
-          <Card className="p-6 border-border">
-            <p className="text-sm text-muted-foreground mb-1">New Applicants</p>
-            <p className="text-3xl font-bold text-blue-600">{statusGroups.new.length}</p>
-          </Card>
-          <Card className="p-6 border-border">
-            <p className="text-sm text-muted-foreground mb-1">Interviewed</p>
-            <p className="text-3xl font-bold text-yellow-600">{statusGroups.interviewed.length}</p>
-          </Card>
-          <Card className="p-6 border-border">
-            <p className="text-sm text-muted-foreground mb-1">Offers Sent</p>
-            <p className="text-3xl font-bold text-green-600">{statusGroups.offered.length}</p>
-          </Card>
-        </div>
-
-        {/* Search and Filter */}
-        <Card className="p-6 border-border mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+      <div className="bg-background border-b border-border sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Applicant Pipeline</h1>
+              <p className="text-sm text-muted-foreground">Welcome, {user?.name || "Owner"}</p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant={selectedStatus === null ? "default" : "outline"}
-                onClick={() => setSelectedStatus(null)}
-                className={selectedStatus === null ? "bg-primary text-primary-foreground" : "border-border"}
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                All
-              </Button>
-              {Object.entries(statusLabels).map(([value, label]) => (
-                <Button
-                  key={value}
-                  variant={selectedStatus === value ? "default" : "outline"}
-                  onClick={() => setSelectedStatus(value)}
-                  className={selectedStatus === value ? "bg-primary text-primary-foreground" : "border-border"}
-                  size="sm"
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* Kanban Board */}
-        <div className="grid md:grid-cols-4 gap-6">
-          {Object.entries(statusGroups).map(([status, applicants]) => (
-            <div key={status}>
-              <div className="mb-4">
-                <h2 className="font-bold text-lg capitalize">
-                  {statusLabels[status]} ({applicants.length})
-                </h2>
-              </div>
-              <div className="space-y-4">
-                {applicants.length === 0 ? (
-                  <Card className="p-4 border-border text-center text-muted-foreground">
-                    No applicants
-                  </Card>
-                ) : (
-                  applicants.map((applicant) => (
-                    <Card
-                      key={applicant.id}
-                      className="p-4 border-border hover:shadow-md transition cursor-pointer"
-                    >
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-bold">
-                            {applicant.firstName} {applicant.lastName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{applicant.email}</p>
-                        </div>
-                        <div className="flex justify-between items-start">
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">{applicant.city}</p>
-                            <p className="text-muted-foreground capitalize">
-                              {applicant.experienceLevel.replace(/_/g, " ")}
-                            </p>
-                          </div>
-                          <span className={`text-xs px-2 py-1 rounded ${statusColors[status]}`}>
-                            {statusLabels[status]}
-                          </span>
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          <Button size="sm" variant="outline" className="flex-1 border-border text-xs">
-                            View
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1 border-border text-xs">
-                            Message
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredApplicants.length === 0 && (
-          <Card className="p-12 text-center border-border">
-            <p className="text-muted-foreground mb-4">No applicants found</p>
-            <Button
-              onClick={() => navigate("/")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Share Application Link
+            <Button onClick={() => logout()} variant="outline" className="border-border">
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
             </Button>
-          </Card>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <Input
+              placeholder="Search by name, email, or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Select value={filterCity} onValueChange={setFilterCity}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="All Cities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Cities</SelectItem>
+                <SelectItem value="Tampa">Tampa</SelectItem>
+                <SelectItem value="Miami">Miami</SelectItem>
+                <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="screened">Screened</SelectItem>
+                <SelectItem value="interviewed">Interviewed</SelectItem>
+                <SelectItem value="offered">Offered</SelectItem>
+                <SelectItem value="hired">Hired</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {statsQuery.data && (
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-xs text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{statsQuery.data.total}</p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-xs text-blue-600">New</p>
+                <p className="text-2xl font-bold text-blue-700">{statsQuery.data.new}</p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-xs text-purple-600">Screened</p>
+                <p className="text-2xl font-bold text-purple-700">{statsQuery.data.screened}</p>
+              </div>
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <p className="text-xs text-yellow-600">Interviewed</p>
+                <p className="text-2xl font-bold text-yellow-700">{statsQuery.data.interviewed}</p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <p className="text-xs text-green-600">Offered</p>
+                <p className="text-2xl font-bold text-green-700">{statsQuery.data.offered}</p>
+              </div>
+              <div className="bg-emerald-50 p-4 rounded-lg">
+                <p className="text-xs text-emerald-600">Hired</p>
+                <p className="text-2xl font-bold text-emerald-700">{statsQuery.data.hired}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {applicantsQuery.isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <KanbanColumn title="New" count={groupedApplicants.new.length} color="blue" applicants={groupedApplicants.new} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+            <KanbanColumn title="Screened" count={groupedApplicants.screened.length} color="purple" applicants={groupedApplicants.screened} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+            <KanbanColumn title="Interviewed" count={groupedApplicants.interviewed.length} color="yellow" applicants={groupedApplicants.interviewed} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+            <KanbanColumn title="Offered" count={groupedApplicants.offered.length} color="green" applicants={groupedApplicants.offered} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+            <KanbanColumn title="Hired" count={groupedApplicants.hired.length} color="emerald" applicants={groupedApplicants.hired} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+          </div>
         )}
-      </main>
+      </div>
+
+      {selectedApplicant && (
+        <ApplicantDetailModal
+          applicant={selectedApplicant}
+          open={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+          onStatusChange={() => {
+            applicantsQuery.refetch();
+            setIsDetailOpen(false);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
+  const colorMap: Record<string, string> = {
+    blue: "bg-blue-500",
+    purple: "bg-purple-500",
+    yellow: "bg-yellow-500",
+    green: "bg-green-500",
+    emerald: "bg-emerald-500",
+  };
+
+  return (
+    <div className="bg-muted/50 rounded-lg p-4 min-h-96">
+      <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+        <span className={`h-3 w-3 rounded-full ${colorMap[color]}`}></span>
+        {title} ({count})
+      </h2>
+      <div className="space-y-3">
+        {applicants.map((app: any) => (
+          <Card key={app.id} className="p-3 cursor-pointer hover:shadow-md transition bg-background" onClick={() => onSelect(app)}>
+            <p className="font-semibold text-sm">{app.firstName} {app.lastName}</p>
+            <p className="text-xs text-muted-foreground truncate">{app.email}</p>
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {app.city}
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ApplicantDetailModal({ applicant, open, onOpenChange, onStatusChange }: any) {
+  const [newStatus, setNewStatus] = useState<ApplicantStatus>(applicant.status as ApplicantStatus);
+  const updateStatusMutation = trpc.applicants.updateStatus.useMutation();
+
+  const handleStatusUpdate = async () => {
+    await updateStatusMutation.mutateAsync({ id: applicant.id, status: newStatus });
+    onStatusChange();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{applicant.firstName} {applicant.lastName}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Email</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <a href={`mailto:${applicant.email}`} className="text-primary hover:underline">{applicant.email}</a>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Phone</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <a href={`tel:${applicant.phone}`} className="text-primary hover:underline">{applicant.phone}</a>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">City</p>
+              <p className="font-semibold mt-1">{applicant.city}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Experience Level</p>
+              <p className="font-semibold mt-1 capitalize">{applicant.experienceLevel.replace(/_/g, " ")}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Current Status</p>
+              <Badge className={`mt-1 ${statusColors[applicant.status as ApplicantStatus]}`}>
+                {applicant.status.charAt(0).toUpperCase() + applicant.status.slice(1)}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Applied On</p>
+              <p className="font-semibold mt-1">{new Date(applicant.createdAt).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Update Status</p>
+              <Select value={newStatus} onValueChange={(value) => setNewStatus(value as ApplicantStatus)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="screened">Screened</SelectItem>
+                  <SelectItem value="interviewed">Interviewed</SelectItem>
+                  <SelectItem value="offered">Offered</SelectItem>
+                  <SelectItem value="hired">Hired</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {newStatus !== applicant.status && (
+              <Button onClick={handleStatusUpdate} disabled={updateStatusMutation.isPending} className="w-full">
+                {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="border-t border-border pt-4">
+          <p className="text-xs text-muted-foreground mb-2">Motivation</p>
+          <p className="text-sm text-foreground">{applicant.motivation}</p>
+        </div>
+
+        {applicant.resumeUrl && (
+          <div className="border-t border-border pt-4">
+            <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+              <FileText className="h-4 w-4" />
+              View Resume
+            </a>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
