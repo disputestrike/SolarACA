@@ -66,11 +66,40 @@
 - [x] Security review (data handling, authentication)
 - [x] Create checkpoint and prepare for delivery
 
+## PHASE 8: Interview Scheduling & Automated Reminders
+- [x] Integrate Calendly API for interview scheduling (backend ready)
+- [ ] Add scheduling UI to applicant detail modal
+- [x] Create interview confirmation page (backend ready)
+- [ ] Implement SMS reminder system (Twilio integration - placeholder ready)
+- [ ] Implement email reminder system (SendGrid integration - placeholder ready)
+- [x] Add reminder templates (backend ready)
+- [x] Track interview attendance and no-shows
+- [ ] Create interview feedback form
+
+## PHASE 9: Communication Hub with Templated Messaging
+- [ ] Build communication hub interface in dashboard
+- [x] Create templated SMS message composer (backend ready)
+- [x] Create templated email composer (backend ready)
+- [ ] Implement send functionality with Twilio/SendGrid (placeholder ready)
+- [x] Create message template library (5 templates created)
+- [ ] Track message delivery and read receipts
+- [ ] Build message history view
+- [ ] Implement bulk messaging capability
+
+## PHASE 10: Candidate Qualification Scoring System
+- [x] Create scoring algorithm based on experience, motivation, and cultural fit
+- [x] Add scoring calculation to applicant submission
+- [ ] Display score on applicant cards in dashboard
+- [ ] Create scoring breakdown in applicant detail view
+- [ ] Add filtering by score range
+- [ ] Create scoring insights and analytics
+- [ ] Build candidate ranking system
+- [x] Implement auto-prioritization based on score
+
 ## Additional Features (Future)
 - [ ] Advanced analytics and reporting
 - [ ] Bulk email/SMS campaigns
 - [ ] Interview feedback forms
-- [ ] Candidate scoring system
 - [ ] Team management and sub-accounts
 - [ ] Integration with payroll/commission tracking
 

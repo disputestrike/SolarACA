@@ -120,9 +120,17 @@ export async function createApplicant(data: {
     resumeUrl: data.resumeUrl || undefined,
     resumeKey: data.resumeKey || undefined,
     status: "new",
+    qualificationScore: 0,
   });
 
-  return result;
+  const createdApplicant = await db
+    .select()
+    .from(applicants)
+    .where(eq(applicants.email, data.email))
+    .orderBy(desc(applicants.createdAt))
+    .limit(1);
+
+  return createdApplicant[0] || null;
 }
 
 export async function getApplicants(filters?: {
@@ -194,4 +202,60 @@ export async function getApplicantStats() {
     offered: countByStatus("offered"),
     hired: countByStatus("hired"),
   };
+}
+
+
+// Calculate qualification score based on experience level and motivation
+export function calculateQualificationScore(
+  experienceLevel: "solar_sales" | "outside_sales" | "entry_level" | "aspiring_leader",
+  motivation: string
+): number {
+  let score = 0;
+
+  // Experience level scoring (0-40 points)
+  const experienceLevelScores: Record<string, number> = {
+    solar_sales: 40,
+    outside_sales: 30,
+    entry_level: 20,
+    aspiring_leader: 35,
+  };
+  score += experienceLevelScores[experienceLevel] || 0;
+
+  // Motivation scoring (0-60 points)
+  // Check for key motivation indicators
+  const motivationKeywords = {
+    "financial freedom": 15,
+    "build team": 15,
+    "leadership": 15,
+    "independence": 10,
+    "earn": 5,
+    "growth": 10,
+  };
+
+  const lowerMotivation = motivation.toLowerCase();
+  for (const [keyword, points] of Object.entries(motivationKeywords)) {
+    if (lowerMotivation.includes(keyword)) {
+      score += points;
+    }
+  }
+
+  // Cap score at 100
+  return Math.min(score, 100);
+}
+
+// Update applicant with qualification score
+export async function updateApplicantQualificationScore(
+  id: number,
+  score: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(applicants)
+    .set({
+      qualificationScore: score,
+      updatedAt: new Date(),
+    })
+    .where(eq(applicants.id, id));
 }

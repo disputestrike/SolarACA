@@ -15,6 +15,13 @@
       "when": 1771893386519,
       "tag": "0001_chubby_network",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772204350393,
+      "tag": "0002_conscious_sharon_ventura",
+      "breakpoints": true
     }
   ]
 }

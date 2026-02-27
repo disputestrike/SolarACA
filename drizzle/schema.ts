@@ -38,6 +38,7 @@ export const applicants = mysqlTable("applicants", {
   resumeUrl: varchar("resumeUrl", { length: 500 }),
   resumeKey: varchar("resumeKey", { length: 500 }),
   status: mysqlEnum("status", ["new", "screened", "interviewed", "offered", "hired", "rejected"]).default("new").notNull(),
+  qualificationScore: int("qualificationScore").default(0).notNull(),
   interviewScheduledAt: timestamp("interviewScheduledAt"),
   interviewNotes: text("interviewNotes"),
   offerSentAt: timestamp("offerSentAt"),

@@ -6,6 +6,8 @@ import {
   getApplicantById,
   updateApplicantStatus,
   getApplicantStats,
+  calculateQualificationScore,
+  updateApplicantQualificationScore,
 } from "../db";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
@@ -56,10 +58,19 @@ export const applicantsRouter = router({
         resumeKey,
       });
 
+      // Calculate and update qualification score
+      const qualificationScore = calculateQualificationScore(
+        input.experienceLevel,
+        input.motivation
+      );
+      if (applicant) {
+        await updateApplicantQualificationScore(applicant.id, qualificationScore);
+      }
+
       // Notify owner of new application
       await notifyOwner({
         title: "New Application Received",
-        content: `${input.firstName} ${input.lastName} from ${input.city} has applied. Email: ${input.email}, Phone: ${input.phone}`,
+        content: `${input.firstName} ${input.lastName} from ${input.city} has applied (Score: ${qualificationScore}/100). Email: ${input.email}, Phone: ${input.phone}`,
       });
 
       return {

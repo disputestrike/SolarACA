@@ -1,0 +1,1 @@
+ALTER TABLE `applicants` ADD `qualificationScore` int DEFAULT 0 NOT NULL;
