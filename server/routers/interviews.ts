@@ -4,6 +4,9 @@ import { getDb } from "../db";
 import { interviews, applicants } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { notifyOwner } from "../_core/notification";
+import { sendSMS } from "../services/twilio";
+import { sendEmail } from "../services/sendgrid";
+import { getSchedulingUrl, getAvailableSlots, createSchedulingLink } from "../services/calendly";
 
 export const interviewsRouter = router({
   // Schedule an interview
@@ -37,7 +40,7 @@ export const interviewsRouter = router({
         })
         .where(eq(applicants.id, input.applicantId));
 
-      // Get applicant details for notification
+      // Get applicant details for notification and messaging
       const applicant = await db
         .select()
         .from(applicants)
@@ -45,17 +48,89 @@ export const interviewsRouter = router({
         .limit(1);
 
       if (applicant[0]) {
+        const dateStr = input.scheduledAt.toLocaleDateString();
+        const timeStr = input.scheduledAt.toLocaleTimeString();
+
         // Notify owner
         await notifyOwner({
           title: "Interview Scheduled",
-          content: `Interview scheduled for ${applicant[0].firstName} ${applicant[0].lastName} on ${input.scheduledAt.toLocaleDateString()} at ${input.scheduledAt.toLocaleTimeString()}`,
+          content: `Interview scheduled for ${applicant[0].firstName} ${applicant[0].lastName} on ${dateStr} at ${timeStr}`,
         });
+
+        // Send SMS confirmation to candidate
+        if (applicant[0].phone) {
+          await sendSMS(
+            applicant[0].phone,
+            `Great news ${applicant[0].firstName}! Your interview with Florida Solar Sales Academy is scheduled for ${dateStr} at ${timeStr}. Reply CONFIRM to confirm or call us if you have questions.`
+          );
+        }
+
+        // Send email confirmation to candidate
+        if (applicant[0].email) {
+          await sendEmail(
+            applicant[0].email,
+            "Interview Scheduled - Florida Solar Sales Academy",
+            `Hi ${applicant[0].firstName},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: ${dateStr}\nTime: ${timeStr}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nFlorida Solar Sales Academy Team`
+          );
+        }
       }
 
       return {
         success: true,
         message: "Interview scheduled successfully",
       };
+    }),
+
+  // Get Calendly scheduling link for a candidate
+  getSchedulingLink: protectedProcedure
+    .input(
+      z.object({
+        applicantId: z.number(),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const applicant = await db
+        .select()
+        .from(applicants)
+        .where(eq(applicants.id, input.applicantId))
+        .limit(1);
+
+      if (!applicant[0]) {
+        throw new Error("Applicant not found");
+      }
+
+      // Try to create a personalized scheduling link
+      const link = await createSchedulingLink(
+        `${applicant[0].firstName} ${applicant[0].lastName}`,
+        applicant[0].email
+      );
+
+      if (link) {
+        return { bookingUrl: link.bookingUrl, configured: true };
+      }
+
+      // Fall back to generic scheduling URL
+      const genericUrl = getSchedulingUrl();
+      return {
+        bookingUrl: genericUrl || "",
+        configured: !!genericUrl,
+      };
+    }),
+
+  // Get available Calendly time slots
+  getAvailableSlots: protectedProcedure
+    .input(
+      z.object({
+        startDate: z.string(),
+        endDate: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const slots = await getAvailableSlots(input.startDate, input.endDate);
+      return slots;
     }),
 
   // Get interviews for an applicant
@@ -148,6 +223,47 @@ export const interviewsRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      // Get interview and applicant details
+      const interview = await db
+        .select()
+        .from(interviews)
+        .where(eq(interviews.id, input.interviewId))
+        .limit(1);
+
+      if (!interview[0]) {
+        throw new Error("Interview not found");
+      }
+
+      const applicant = await db
+        .select()
+        .from(applicants)
+        .where(eq(applicants.id, interview[0].applicantId))
+        .limit(1);
+
+      if (!applicant[0]) {
+        throw new Error("Applicant not found");
+      }
+
+      const timeStr = interview[0].scheduledAt.toLocaleTimeString();
+      const dateStr = interview[0].scheduledAt.toLocaleDateString();
+
+      // Send SMS reminder
+      if ((input.reminderType === "sms" || input.reminderType === "both") && applicant[0].phone) {
+        await sendSMS(
+          applicant[0].phone,
+          `Reminder ${applicant[0].firstName}: Your interview with Florida Solar Sales Academy is on ${dateStr} at ${timeStr}. Looking forward to meeting you!`
+        );
+      }
+
+      // Send email reminder
+      if ((input.reminderType === "email" || input.reminderType === "both") && applicant[0].email) {
+        await sendEmail(
+          applicant[0].email,
+          "Interview Reminder - Florida Solar Sales Academy",
+          `Hi ${applicant[0].firstName},\n\nThis is a friendly reminder that your interview with Florida Solar Sales Academy is scheduled for ${dateStr} at ${timeStr}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\nFlorida Solar Sales Academy Team`
+        );
+      }
+
       // Update reminder sent timestamp
       await db
         .update(interviews)
@@ -156,32 +272,6 @@ export const interviewsRouter = router({
           reminderType: input.reminderType,
         })
         .where(eq(interviews.id, input.interviewId));
-
-      // TODO: Integrate with Twilio for SMS and SendGrid for email
-      // const interview = await db
-      //   .select()
-      //   .from(interviews)
-      //   .where(eq(interviews.id, input.interviewId))
-      //   .limit(1);
-      //
-      // if (interview[0]) {
-      //   const applicant = await db
-      //     .select()
-      //     .from(applicants)
-      //     .where(eq(applicants.id, interview[0].applicantId))
-      //     .limit(1);
-      //
-      //   if (applicant[0]) {
-      //     // Send SMS reminder
-      //     if (input.reminderType === "sms" || input.reminderType === "both") {
-      //       // Twilio API call
-      //     }
-      //     // Send email reminder
-      //     if (input.reminderType === "email" || input.reminderType === "both") {
-      //       // SendGrid API call
-      //     }
-      //   }
-      // }
 
       return {
         success: true,

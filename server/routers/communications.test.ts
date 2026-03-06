@@ -45,7 +45,7 @@ describe("communications router", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.message).toContain("queued");
+    expect(result.message).toContain("SMS sent successfully");
   });
 
   it("should send SMS with template", async () => {
@@ -73,7 +73,7 @@ describe("communications router", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.message).toContain("queued");
+    expect(result.message).toContain("Email sent successfully");
   });
 
   it("should send email with template", async () => {

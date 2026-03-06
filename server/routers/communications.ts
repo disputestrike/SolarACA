@@ -3,6 +3,8 @@ import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { communicationLog } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { sendSMS } from "../services/twilio";
+import { sendEmail } from "../services/sendgrid";
 
 // Message templates
 export const messageTemplates = {
@@ -88,25 +90,21 @@ export const communicationsRouter = router({
         }
       }
 
+      // Send SMS via Twilio
+      const smsResult = await sendSMS(input.phoneNumber, finalMessage);
+
       // Log the communication
       await db.insert(communicationLog).values({
         applicantId: input.applicantId,
         type: "sms",
         message: finalMessage,
-        status: "sent",
+        status: smsResult.success ? "sent" : "failed",
       });
 
-      // TODO: Integrate with Twilio API to actually send SMS
-      // const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      // await twilio.messages.create({
-      //   body: finalMessage,
-      //   from: process.env.TWILIO_PHONE_NUMBER,
-      //   to: input.phoneNumber,
-      // });
-
       return {
-        success: true,
-        message: "SMS queued for delivery",
+        success: smsResult.success,
+        message: smsResult.success ? "SMS sent successfully" : `SMS failed: ${smsResult.error}`,
+        sid: smsResult.sid,
       };
     }),
 
@@ -146,28 +144,21 @@ export const communicationsRouter = router({
         }
       }
 
+      // Send email via SendGrid
+      const emailResult = await sendEmail(input.email, finalSubject, finalBody);
+
       // Log the communication
       await db.insert(communicationLog).values({
         applicantId: input.applicantId,
         type: "email",
         subject: finalSubject,
         message: finalBody,
-        status: "sent",
+        status: emailResult.success ? "sent" : "failed",
       });
 
-      // TODO: Integrate with SendGrid API to actually send email
-      // const sgMail = require('@sendgrid/mail');
-      // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-      // await sgMail.send({
-      //   to: input.email,
-      //   from: process.env.SENDGRID_FROM_EMAIL,
-      //   subject: finalSubject,
-      //   text: finalBody,
-      // });
-
       return {
-        success: true,
-        message: "Email queued for delivery",
+        success: emailResult.success,
+        message: emailResult.success ? "Email sent successfully" : `Email failed: ${emailResult.error}`,
       };
     }),
 
