@@ -3,11 +3,33 @@ import { applicantsRouter } from "./applicants";
 import * as db from "../db";
 import * as storage from "../storage";
 import * as notification from "../_core/notification";
+import type { TrpcContext } from "../_core/context";
 
 // Mock the dependencies
 vi.mock("../db");
 vi.mock("../storage");
 vi.mock("../_core/notification");
+
+type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+
+function createAuthContext(): TrpcContext {
+  const user: AuthenticatedUser = {
+    id: 1,
+    openId: "test-owner",
+    email: "owner@fssa.com",
+    name: "Test Owner",
+    loginMethod: "manus",
+    role: "admin",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+  return {
+    user,
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
+  };
+}
 
 describe("applicantsRouter", () => {
   beforeEach(() => {
@@ -27,7 +49,7 @@ describe("applicantsRouter", () => {
 
       const mockNotifyOwner = vi.spyOn(notification, "notifyOwner").mockResolvedValue(true);
 
-      const caller = applicantsRouter.createCaller({} as any);
+      const caller = applicantsRouter.createCaller({} as any); // submit is public
 
       const result = await caller.submit({
         firstName: "John",
@@ -71,7 +93,7 @@ describe("applicantsRouter", () => {
 
       const mockNotifyOwner = vi.spyOn(notification, "notifyOwner").mockResolvedValue(true);
 
-      const caller = applicantsRouter.createCaller({} as any);
+      const caller = applicantsRouter.createCaller({} as any); // submit is public
 
       const result = await caller.submit({
         firstName: "John",
@@ -116,7 +138,7 @@ describe("applicantsRouter", () => {
 
       const mockGetApplicants = vi.spyOn(db, "getApplicants").mockResolvedValue(mockApplicants as any);
 
-      const caller = applicantsRouter.createCaller({} as any);
+      const caller = applicantsRouter.createCaller(createAuthContext());
       const result = await caller.list({});
 
       expect(result).toEqual(mockApplicants);
@@ -136,7 +158,7 @@ describe("applicantsRouter", () => {
 
       const mockGetApplicants = vi.spyOn(db, "getApplicants").mockResolvedValue(mockApplicants as any);
 
-      const caller = applicantsRouter.createCaller({} as any);
+      const caller = applicantsRouter.createCaller(createAuthContext());
       const result = await caller.list({ status: "screened" });
 
       expect(mockGetApplicants).toHaveBeenCalledWith({ status: "screened" });
@@ -147,7 +169,7 @@ describe("applicantsRouter", () => {
     it("should update applicant status", async () => {
       const mockUpdateStatus = vi.spyOn(db, "updateApplicantStatus").mockResolvedValue(undefined);
 
-      const caller = applicantsRouter.createCaller({} as any);
+      const caller = applicantsRouter.createCaller(createAuthContext());
       const result = await caller.updateStatus({
         id: 1,
         status: "interviewed",
@@ -171,7 +193,7 @@ describe("applicantsRouter", () => {
 
       const mockGetStats = vi.spyOn(db, "getApplicantStats").mockResolvedValue(mockStats);
 
-      const caller = applicantsRouter.createCaller({} as any);
+      const caller = applicantsRouter.createCaller(createAuthContext());
       const result = await caller.stats();
 
       expect(result).toEqual(mockStats);

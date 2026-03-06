@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { communicationLog } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -7,38 +7,38 @@ import { eq } from "drizzle-orm";
 // Message templates
 export const messageTemplates = {
   applicationReceived: {
-    sms: "Hi {name}! We received your application for Florida Solar Academy. We'll review it and be in touch soon. Exciting times ahead!",
+    sms: "Hi {name}! We received your application for Florida Solar Sales Academy. We'll review it and be in touch soon. Exciting times ahead!",
     email: {
-      subject: "Application Received - Florida Solar Academy",
-      body: "Hi {name},\n\nThank you for applying to Florida Solar Academy! We're excited to review your application and learn more about your interest in building a career in solar energy.\n\nWe'll be in touch within 24-48 hours with next steps.\n\nBest regards,\nFlorida Solar Academy Team",
+      subject: "Application Received - Florida Solar Sales Academy",
+      body: "Hi {name},\n\nThank you for applying to Florida Solar Sales Academy! We're excited to review your application and learn more about your interest in building a career in solar energy.\n\nWe'll be in touch within 24-48 hours with next steps.\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
   interviewScheduled: {
     sms: "Great news {name}! Your interview is scheduled for {date} at {time}. Reply CONFIRM to confirm or call us if you have questions.",
     email: {
-      subject: "Interview Scheduled - Florida Solar Academy",
-      body: "Hi {name},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: {date}\nTime: {time}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nFlorida Solar Academy Team",
+      subject: "Interview Scheduled - Florida Solar Sales Academy",
+      body: "Hi {name},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: {date}\nTime: {time}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
   interviewReminder: {
-    sms: "Reminder: Your interview with Florida Solar Academy is tomorrow at {time}. Looking forward to meeting you!",
+    sms: "Reminder {name}: Your interview with Florida Solar Sales Academy is tomorrow at {time}. Looking forward to meeting you!",
     email: {
-      subject: "Interview Reminder - Florida Solar Academy",
-      body: "Hi {name},\n\nThis is a friendly reminder that your interview with Florida Solar Academy is scheduled for tomorrow at {time}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\nFlorida Solar Academy Team",
+      subject: "Interview Reminder - Florida Solar Sales Academy",
+      body: "Hi {name},\n\nThis is a friendly reminder that your interview with Florida Solar Sales Academy is scheduled for tomorrow at {time}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
   offerSent: {
     sms: "Exciting news {name}! We'd like to extend an offer to join our team. Check your email for details.",
     email: {
-      subject: "Job Offer - Florida Solar Academy",
-      body: "Hi {name},\n\nCongratulations! We're pleased to extend an offer for the position of Solar Sales Professional at Florida Solar Academy.\n\nPlease review the attached offer letter and let us know if you have any questions.\n\nWe're excited to have you join our team!\n\nBest regards,\nFlorida Solar Academy Team",
+      subject: "Job Offer - Florida Solar Sales Academy",
+      body: "Hi {name},\n\nCongratulations! We're pleased to extend an offer for the position of Solar Sales Professional at Florida Solar Sales Academy.\n\nPlease review the attached offer letter and let us know if you have any questions.\n\nWe're excited to have you join our team!\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
   trainingStarting: {
-    sms: "Welcome to Florida Solar Academy! Your training starts {date}. Check your email for training schedule and materials.",
+    sms: "Welcome to Florida Solar Sales Academy {name}! Your training starts {date}. Check your email for training schedule and materials.",
     email: {
-      subject: "Welcome to Florida Solar Academy - Training Schedule",
-      body: "Hi {name},\n\nWelcome to the Florida Solar Academy family! We're excited to have you on board.\n\nYour training program begins on {date}. Please find the detailed schedule and pre-work materials attached.\n\nGet ready to launch your solar career!\n\nBest regards,\nFlorida Solar Academy Team",
+      subject: "Welcome to Florida Solar Sales Academy - Training Schedule",
+      body: "Hi {name},\n\nWelcome to the Florida Solar Sales Academy family! We're excited to have you on board.\n\nYour training program begins on {date}. Please find the detailed schedule and pre-work materials attached.\n\nGet ready to launch your solar career!\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
 };
@@ -57,12 +57,12 @@ function replaceTemplateVariables(
 
 export const communicationsRouter = router({
   // Send SMS message
-  sendSMS: publicProcedure
+  sendSMS: protectedProcedure
     .input(
       z.object({
         applicantId: z.number(),
-        phoneNumber: z.string(),
-        message: z.string(),
+        phoneNumber: z.string().min(1),
+        message: z.string().min(1),
         templateKey: z.string().optional(),
         templateVariables: z.record(z.string(), z.any()).optional(),
       })
@@ -111,7 +111,7 @@ export const communicationsRouter = router({
     }),
 
   // Send email message
-  sendEmail: publicProcedure
+  sendEmail: protectedProcedure
     .input(
       z.object({
         applicantId: z.number(),
@@ -172,22 +172,22 @@ export const communicationsRouter = router({
     }),
 
   // Get communication history for an applicant
-  getHistory: publicProcedure
+  getHistory: protectedProcedure
     .input(z.object({ applicantId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
-      // TODO: Implement filtering by applicantId when drizzle-orm supports it
       const history = await db
         .select()
-        .from(communicationLog);
+        .from(communicationLog)
+        .where(eq(communicationLog.applicantId, input.applicantId));
 
       return history;
     }),
 
   // Get message templates
-  getTemplates: publicProcedure.query(() => {
+  getTemplates: protectedProcedure.query(() => {
     return messageTemplates;
   }),
 });

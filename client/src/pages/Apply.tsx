@@ -150,7 +150,7 @@ export default function Apply() {
       <div className="container mx-auto max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Join Florida Solar Academy</h1>
+          <h1 className="text-4xl font-bold mb-2">Join Florida Solar Sales Academy</h1>
           <p className="text-muted-foreground">Start your journey to financial freedom and leadership</p>
         </div>
 

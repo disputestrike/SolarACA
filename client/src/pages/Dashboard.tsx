@@ -25,14 +25,14 @@ export default function Dashboard() {
   const { user, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCity, setFilterCity] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterCity, setFilterCity] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const applicantsQuery = trpc.applicants.list.useQuery({
-    city: filterCity || undefined,
-    status: filterStatus || undefined,
+    city: filterCity === "all" ? undefined : filterCity || undefined,
+    status: filterStatus === "all" ? undefined : filterStatus || undefined,
   });
 
   const statsQuery = trpc.applicants.stats.useQuery();
@@ -90,7 +90,7 @@ export default function Dashboard() {
                 <SelectValue placeholder="All Cities" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Cities</SelectItem>
+                <SelectItem value="all">All Cities</SelectItem>
                 <SelectItem value="Tampa">Tampa</SelectItem>
                 <SelectItem value="Miami">Miami</SelectItem>
                 <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
@@ -101,7 +101,7 @@ export default function Dashboard() {
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="new">New</SelectItem>
                 <SelectItem value="screened">Screened</SelectItem>
                 <SelectItem value="interviewed">Interviewed</SelectItem>

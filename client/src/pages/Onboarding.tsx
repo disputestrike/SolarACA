@@ -54,7 +54,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-muted/30">
       <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome to Florida Solar Academy</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome to Florida Solar Sales Academy</h1>
           <p className="text-muted-foreground mb-6">Your personalized onboarding and training portal</p>
 
           <div className="grid md:grid-cols-3 gap-6">

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { interviews, applicants } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -7,7 +7,7 @@ import { notifyOwner } from "../_core/notification";
 
 export const interviewsRouter = router({
   // Schedule an interview
-  schedule: publicProcedure
+  schedule: protectedProcedure
     .input(
       z.object({
         applicantId: z.number(),
@@ -59,7 +59,7 @@ export const interviewsRouter = router({
     }),
 
   // Get interviews for an applicant
-  getByApplicant: publicProcedure
+  getByApplicant: protectedProcedure
     .input(z.object({ applicantId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -75,7 +75,7 @@ export const interviewsRouter = router({
     }),
 
   // Get all upcoming interviews
-  getUpcoming: publicProcedure.query(async () => {
+  getUpcoming: protectedProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 
@@ -90,7 +90,7 @@ export const interviewsRouter = router({
   }),
 
   // Update interview status
-  updateStatus: publicProcedure
+  updateStatus: protectedProcedure
     .input(
       z.object({
         interviewId: z.number(),
@@ -137,7 +137,7 @@ export const interviewsRouter = router({
     }),
 
   // Send interview reminder
-  sendReminder: publicProcedure
+  sendReminder: protectedProcedure
     .input(
       z.object({
         interviewId: z.number(),
@@ -190,7 +190,7 @@ export const interviewsRouter = router({
     }),
 
   // Get interview statistics
-  getStats: publicProcedure.query(async () => {
+  getStats: protectedProcedure.query(async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 

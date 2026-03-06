@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import {
   createApplicant,
   getApplicants,
@@ -79,8 +79,8 @@ export const applicantsRouter = router({
       };
     }),
 
-  // Get all applicants with optional filters
-  list: publicProcedure
+  // Get all applicants with optional filters (admin only)
+  list: protectedProcedure
     .input(
       z.object({
         status: z.string().optional(),
@@ -93,16 +93,16 @@ export const applicantsRouter = router({
       return applicants;
     }),
 
-  // Get a single applicant by ID
-  getById: publicProcedure
+  // Get a single applicant by ID (admin only)
+  getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const applicant = await getApplicantById(input.id);
       return applicant;
     }),
 
-  // Update applicant status
-  updateStatus: publicProcedure
+  // Update applicant status (admin only)
+  updateStatus: protectedProcedure
     .input(
       z.object({
         id: z.number(),
@@ -114,8 +114,8 @@ export const applicantsRouter = router({
       return { success: true };
     }),
 
-  // Get statistics
-  stats: publicProcedure.query(async () => {
+  // Get statistics (admin only)
+  stats: protectedProcedure.query(async () => {
     const stats = await getApplicantStats();
     return stats;
   }),

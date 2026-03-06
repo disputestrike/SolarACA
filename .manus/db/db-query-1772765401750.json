@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, firstName, lastName, email, city, status FROM applicants ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2myJVED8qg2m58R.ce15d87a9139 --database TovehVTntbKREJsUiV75rg --execute SELECT id, firstName, lastName, email, city, status FROM applicants ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "firstName": "Benjamin",
+      "lastName": "Peter",
+      "email": "adayehi.pe@gmaoi.com",
+      "city": "Tampa",
+      "status": "interviewed"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfirstName\tlastName\temail\tcity\tstatus\n1\tBenjamin\tPeter\tadayehi.pe@gmaoi.com\tTampa\tinterviewed\n",
+  "stderr": "",
+  "execution_time_ms": 368
+}

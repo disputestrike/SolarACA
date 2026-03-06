@@ -2,21 +2,30 @@ import { describe, expect, it } from "vitest";
 import { appRouter } from "../routers";
 import type { TrpcContext } from "../_core/context";
 
-function createPublicContext(): TrpcContext {
+type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+
+function createAuthContext(): TrpcContext {
+  const user: AuthenticatedUser = {
+    id: 1,
+    openId: "test-owner",
+    email: "owner@fssa.com",
+    name: "Test Owner",
+    loginMethod: "manus",
+    role: "admin",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
   return {
-    user: null,
-    req: {
-      protocol: "https",
-      headers: {},
-    } as TrpcContext["req"],
-    res: {} as TrpcContext["res"],
+    user,
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
   };
 }
 
 describe("interviews router", () => {
   it("should get interview statistics", async () => {
-    const ctx = createPublicContext();
-    const caller = appRouter.createCaller(ctx);
+    const caller = appRouter.createCaller(createAuthContext());
 
     const stats = await caller.interviews.getStats();
 
@@ -29,8 +38,7 @@ describe("interviews router", () => {
   });
 
   it("should get upcoming interviews", async () => {
-    const ctx = createPublicContext();
-    const caller = appRouter.createCaller(ctx);
+    const caller = appRouter.createCaller(createAuthContext());
 
     const interviews = await caller.interviews.getUpcoming();
 
@@ -38,8 +46,7 @@ describe("interviews router", () => {
   });
 
   it("should schedule an interview", async () => {
-    const ctx = createPublicContext();
-    const caller = appRouter.createCaller(ctx);
+    const caller = appRouter.createCaller(createAuthContext());
 
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7);
@@ -55,8 +62,7 @@ describe("interviews router", () => {
   });
 
   it("should send interview reminder", async () => {
-    const ctx = createPublicContext();
-    const caller = appRouter.createCaller(ctx);
+    const caller = appRouter.createCaller(createAuthContext());
 
     const result = await caller.interviews.sendReminder({
       interviewId: 1,
@@ -67,8 +73,7 @@ describe("interviews router", () => {
   });
 
   it("should update interview status", async () => {
-    const ctx = createPublicContext();
-    const caller = appRouter.createCaller(ctx);
+    const caller = appRouter.createCaller(createAuthContext());
 
     const result = await caller.interviews.updateStatus({
       interviewId: 1,

@@ -62,7 +62,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-primary flex items-center gap-2">
             <Sun className="h-7 w-7" />
-            Florida Solar Academy
+            Florida Solar Sales Academy
           </div>
           <Button
             onClick={() => navigate("/apply")}
@@ -124,7 +124,7 @@ export default function Home() {
       <section className="py-16 px-4 bg-background">
         <div className="container mx-auto max-w-5xl">
           <h2 className="text-3xl font-bold text-center mb-12">
-            Why Join Florida Solar Academy?
+            Why Join Florida Solar Sales Academy?
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="p-6 text-center border-border hover:border-primary/50 transition">
@@ -311,7 +311,7 @@ export default function Home() {
       <section className="py-16 px-4 bg-background">
         <div className="container mx-auto max-w-5xl">
           <h2 className="text-3xl font-bold text-center mb-12">
-            Why Hire Through Florida Solar Academy?
+            Why Hire Through Florida Solar Sales Academy?
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="p-8 border-border">
@@ -428,7 +428,7 @@ export default function Home() {
       <footer className="bg-muted/50 border-t border-border py-8 px-4">
         <div className="container mx-auto text-center text-muted-foreground text-sm">
           <p>
-            Florida Solar Academy | Serving Tampa, Miami, and Fort Lauderdale
+            Florida Solar Sales Academy | Serving Tampa, Miami, and Fort Lauderdale
           </p>
           <p className="mt-2">
             © 2026. All rights reserved. | Contact: info@floridasolaracademy.com
