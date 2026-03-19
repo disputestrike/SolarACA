@@ -115,7 +115,11 @@ export function registerOAuthRoutes(app: Express) {
       });
 
       if (grantIdToConsume) {
-        await db.consumeStaffGrantById(grantIdToConsume);
+        try {
+          await db.consumeStaffGrantById(grantIdToConsume);
+        } catch (consumeErr) {
+          console.error("[OAuth] consumeStaffGrant failed (non-fatal):", consumeErr);
+        }
       }
 
       const sessionToken = await createSessionToken(openId, name);
@@ -125,7 +129,8 @@ export function registerOAuthRoutes(app: Express) {
       const user = await db.getUserByOpenId(openId);
       res.redirect(302, user?.role === "admin" ? "/dashboard" : "/");
     } catch (error) {
-      console.error("[OAuth] Google callback failed:", error);
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error("[OAuth] Google callback failed:", detail, error);
       res.status(500).json({ error: "Google authentication failed" });
     }
   });

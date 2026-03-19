@@ -1,8 +1,80 @@
 import { eq, desc, and, sql, isNull } from "drizzle-orm";
 import { ENV } from "./_core/env";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+import type { User } from "../drizzle/schema";
 import { InsertUser, users, staffGrants } from "../drizzle/schema";
 import { applicants } from "../drizzle/schema";
+
+/** DB missing new columns/tables after deploy (migrations not applied yet). */
+function isRecoverableSchemaError(err: unknown): boolean {
+  let cur: unknown = err;
+  for (let i = 0; i < 5 && cur != null; i++) {
+    const e = cur as { errno?: number; message?: string; sqlMessage?: string; cause?: unknown };
+    if (e.errno === 1054 || e.errno === 1146) return true;
+    const m = `${e.sqlMessage ?? ""} ${e.message ?? ""}`.toLowerCase();
+    if (m.includes("unknown column") || m.includes("doesn't exist")) return true;
+    cur = e.cause;
+  }
+  return false;
+}
+
+async function legacyGetUserByOpenId(openId: string): Promise<User | undefined> {
+  if (!ENV.databaseUrl) return undefined;
+  const conn = await mysql.createConnection(ENV.databaseUrl);
+  try {
+    const [rows] = await conn.execute(
+      "SELECT id, openId, name, email, loginMethod, role, createdAt, updatedAt, lastSignedIn FROM users WHERE openId = ? LIMIT 1",
+      [openId]
+    );
+    const row = (rows as Record<string, unknown>[])[0];
+    if (!row) return undefined;
+    return {
+      id: row.id as number,
+      openId: row.openId as string,
+      name: row.name as string | null,
+      email: row.email as string | null,
+      loginMethod: row.loginMethod as string | null,
+      role: row.role as "user" | "admin",
+      adminTier: null,
+      adminPermissions: null,
+      createdAt: row.createdAt as Date,
+      updatedAt: row.updatedAt as Date,
+      lastSignedIn: row.lastSignedIn as Date,
+    };
+  } finally {
+    await conn.end();
+  }
+}
+
+/** Upsert without adminTier/adminPermissions (older `users` table). */
+async function legacyUpsertUser(user: InsertUser): Promise<void> {
+  if (!ENV.databaseUrl) throw new Error("Database not available");
+  const conn = await mysql.createConnection(ENV.databaseUrl);
+  try {
+    const lastSignedIn = user.lastSignedIn ?? new Date();
+    await conn.execute(
+      `INSERT INTO users (openId, name, email, loginMethod, lastSignedIn, role)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         name = VALUES(name),
+         email = VALUES(email),
+         loginMethod = VALUES(loginMethod),
+         lastSignedIn = VALUES(lastSignedIn),
+         role = VALUES(role)`,
+      [
+        user.openId,
+        user.name ?? null,
+        user.email ?? null,
+        user.loginMethod ?? "google",
+        lastSignedIn,
+        user.role ?? "user",
+      ]
+    );
+  } finally {
+    await conn.end();
+  }
+}
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -70,6 +142,19 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       set: updateSet,
     });
   } catch (error) {
+    if (isRecoverableSchemaError(error)) {
+      console.warn(
+        "[Database] Drizzle upsert failed (schema likely behind migrations); retrying legacy upsert:",
+        error
+      );
+      try {
+        await legacyUpsertUser(user);
+        return;
+      } catch (e2) {
+        console.error("[Database] Legacy upsert also failed:", e2);
+        throw e2;
+      }
+    }
     console.error("[Database] Failed to upsert user:", error);
     throw error;
   }
@@ -94,12 +179,20 @@ export function normalizeStaffEmail(email: string) {
 export async function getPendingStaffGrantByEmail(emailNorm: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const rows = await db
-    .select()
-    .from(staffGrants)
-    .where(and(eq(staffGrants.email, emailNorm), isNull(staffGrants.consumedAt)))
-    .limit(1);
-  return rows[0];
+  try {
+    const rows = await db
+      .select()
+      .from(staffGrants)
+      .where(and(eq(staffGrants.email, emailNorm), isNull(staffGrants.consumedAt)))
+      .limit(1);
+    return rows[0];
+  } catch (error) {
+    if (isRecoverableSchemaError(error)) {
+      console.warn("[Database] staffGrants lookup skipped (table/columns missing):", error);
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 export async function listPendingStaffGrants() {
@@ -133,7 +226,15 @@ export async function replacePendingStaffGrant(input: {
 export async function consumeStaffGrantById(id: number) {
   const db = await getDb();
   if (!db) return;
-  await db.update(staffGrants).set({ consumedAt: new Date() }).where(eq(staffGrants.id, id));
+  try {
+    await db.update(staffGrants).set({ consumedAt: new Date() }).where(eq(staffGrants.id, id));
+  } catch (error) {
+    if (isRecoverableSchemaError(error)) {
+      console.warn("[Database] consumeStaffGrant skipped:", error);
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function deleteStaffGrantById(id: number) {
