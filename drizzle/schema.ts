@@ -72,7 +72,7 @@ export const applicants = mysqlTable("applicants", {
   motivation: text("motivation"),
   resumeUrl: varchar("resumeUrl", { length: 500 }),
   resumeKey: varchar("resumeKey", { length: 500 }),
-  /** PDF bytes as base64 when Forge upload fails; prefer resumeUrl when set */
+  /** File bytes as base64 when Forge is off or upload fails; prefer resumeUrl when set */
   resumeInlineBase64: mediumText("resumeInlineBase64"),
   resumeStoredFileName: varchar("resumeStoredFileName", { length: 260 }),
   status: mysqlEnum("status", ["new", "screened", "interviewed", "offered", "hired", "rejected"]).default("new").notNull(),

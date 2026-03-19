@@ -11,6 +11,10 @@ import { trpc } from "@/lib/trpc";
 
 type Step = "info" | "experience" | "motivation" | "resume" | "success";
 
+/** PDF, Word, common résumé images (Google Docs: use File → Download → PDF). */
+const RESUME_FILE_RE = /\.(pdf|doc|docx|png|jpe?g|webp|gif|heic|bmp|tiff?)$/i;
+const MAX_RESUME_BYTES = 8 * 1024 * 1024;
+
 export default function Apply() {
   const [step, setStep] = useState<Step>("info");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,12 +56,18 @@ export default function Apply() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Resume must be less than 5MB");
+      if (file.size > MAX_RESUME_BYTES) {
+        toast.error("File must be 8MB or smaller");
+        return;
+      }
+      if (!RESUME_FILE_RE.test(file.name)) {
+        toast.error(
+          "Use PDF, Word (.doc/.docx), or an image (JPG, PNG, WEBP…). From Google Docs: File → Download → PDF."
+        );
         return;
       }
       setFormData((prev) => ({ ...prev, resume: file }));
-      toast.success("Resume selected");
+      toast.success(`File selected: ${file.name}`);
     }
   };
 
@@ -329,20 +339,25 @@ export default function Apply() {
                 <p className="font-semibold mb-1">
                   {formData.resume ? formData.resume.name : "Click to upload or drag and drop"}
                 </p>
-                <p className="text-sm text-muted-foreground">PDF, DOC, or DOCX (Max 5MB)</p>
+                <p className="text-sm text-muted-foreground">
+                  PDF, Word (.doc / .docx), or image (JPG, PNG, WEBP, GIF…) — max 8MB
+                </p>
               </div>
 
               <input
                 id="resume-input"
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.heic,.bmp,.tif,.tiff,image/*"
                 onChange={handleFileChange}
                 className="hidden"
               />
 
-              <div className="bg-primary/5 p-4 rounded-lg">
+              <div className="bg-primary/5 p-4 rounded-lg space-y-2">
                 <p className="text-sm text-foreground">
-                  <strong>Not required:</strong> We're more interested in your drive and potential than your past experience. If you don't have a resume ready, you can still proceed.
+                  <strong>Google Docs:</strong> open your doc → <strong>File → Download → PDF</strong>, then upload the PDF here (we can&apos;t read a live Docs link).
+                </p>
+                <p className="text-sm text-foreground">
+                  <strong>Not required:</strong> If you don&apos;t have a file ready, you can still submit without one.
                 </p>
               </div>
             </div>

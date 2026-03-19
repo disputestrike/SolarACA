@@ -9,6 +9,20 @@ import type { TrpcContext } from "../_core/context";
 // Mock the dependencies
 vi.mock("../db");
 vi.mock("../storage");
+vi.mock("../_core/env", () => ({
+  ENV: {
+    cookieSecret: "",
+    databaseUrl: "",
+    databaseName: "",
+    googleClientId: "",
+    googleClientSecret: "",
+    adminEmail: "",
+    forgeApiUrl: "https://forge.test/",
+    forgeApiKey: "test-key",
+    isProduction: false,
+    port: "3000",
+  },
+}));
 vi.mock("../_core/notification");
 vi.mock("../services/sendgrid", () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true }),
@@ -135,11 +149,63 @@ describe("applicantsRouter", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(mockStoragePut).toHaveBeenCalled();
+      expect(mockStoragePut).toHaveBeenCalledWith(
+        expect.stringMatching(/^resumes\/john@example\.com-\d+-resume\.pdf$/),
+        expect.any(Buffer),
+        "application/pdf"
+      );
       expect(mockCreateApplicant).toHaveBeenCalledWith(
         expect.objectContaining({
           resumeUrl: "https://example.com/resumes/john@example.com-123-resume.pdf",
           resumeKey: "resumes/john@example.com-123-resume.pdf",
+          resumeInlineBase64: undefined,
+          resumeStoredFileName: undefined,
+        })
+      );
+    });
+
+    it("should save resume in DB when Forge upload fails", async () => {
+      vi.spyOn(storage, "storagePut").mockRejectedValue(new Error("upload failed"));
+
+      const mockCreateApplicant = vi.spyOn(db, "createApplicant").mockResolvedValue({
+        id: 2,
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@example.com",
+        phone: "5559876543",
+        city: "Miami",
+        experienceLevel: "entry_level",
+        motivation: "I want to grow in solar sales and help homeowners",
+        status: "new",
+        qualificationScore: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      vi.spyOn(notification, "notifyOwner").mockResolvedValue(true);
+      vi.spyOn(sendgrid, "sendEmail").mockResolvedValue({ success: true });
+
+      const caller = applicantsRouter.createCaller({} as any);
+
+      const result = await caller.submit({
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@example.com",
+        phone: "5559876543",
+        city: "Miami",
+        experienceLevel: "entry_level",
+        motivation: "I want to grow in solar sales and help homeowners",
+        resumeBase64: "JVBERi0xLjQK",
+        resumeFileName: "cv.pdf",
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockCreateApplicant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          resumeUrl: undefined,
+          resumeKey: undefined,
+          resumeInlineBase64: "JVBERi0xLjQK",
+          resumeStoredFileName: "cv.pdf",
         })
       );
     });

@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Loader2, Mail, Phone, FileText, MapPin, LogOut } from "lucide-react";
+import { Link } from "wouter";
+import { Loader2, Mail, Phone, FileText, MapPin, LogOut, Shield } from "lucide-react";
 
 type ApplicantStatus = "new" | "screened" | "interviewed" | "offered" | "hired" | "rejected";
 
@@ -96,10 +97,20 @@ export default function Dashboard() {
               <h1 className="text-3xl font-bold">Applicant Pipeline</h1>
               <p className="text-sm text-muted-foreground">Welcome, {user?.name || "Owner"}</p>
             </div>
-            <Button onClick={() => logout()} variant="outline" className="border-border">
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {Boolean(user?.effectivePermissions?.["admins.manage"]) && (
+                <Button variant="outline" className="border-border" asChild>
+                  <Link href="/dashboard/settings">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Team &amp; permissions
+                  </Link>
+                </Button>
+              )}
+              <Button onClick={() => logout()} variant="outline" className="border-border">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -307,7 +318,7 @@ function KanbanColumn({
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 hover:text-emerald-800 hover:underline"
-                      title="Open résumé PDF"
+                      title="Open résumé file"
                     >
                       <FileText className="h-3 w-3" aria-hidden />
                       Résumé
@@ -317,7 +328,7 @@ function KanbanColumn({
                       Résumé · locked
                     </span>
                   ) : (
-                    <span className="text-[9px] text-muted-foreground/90">No PDF</span>
+                    <span className="text-[9px] text-muted-foreground/90">No file</span>
                   )}
                 </span>
               </div>
@@ -466,10 +477,9 @@ function ApplicantDetailModal({
             )
           ) : (
             <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 text-sm p-3">
-              <p className="font-medium">No resume stored for this applicant.</p>
+              <p className="font-medium">No résumé file stored for this applicant.</p>
               <p className="text-xs mt-1 text-amber-800/90">
-                That usually means they skipped the upload step, the file wasn’t a PDF, or resume storage couldn’t upload.
-                New applications automatically save the PDF in the database if external storage fails — submit again with a PDF, or check deploy logs for upload errors.
+                They may have skipped upload. If they did attach a file, older submissions before the DB fallback fix may have lost the file when cloud storage wasn’t configured — ask them to re-submit with PDF, Word, or an image.
               </p>
             </div>
           )}

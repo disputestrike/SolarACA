@@ -11,6 +11,8 @@ import {
   updateApplicantResumeUrl,
   getApplicantEmailStatsMap,
 } from "../db";
+import { ENV } from "../_core/env";
+import { mimeTypeForResumeFileName, sanitizeResumeFileName } from "../resumeMime";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { sendEmail } from "../services/sendgrid";
@@ -38,17 +40,37 @@ export const applicantsRouter = router({
     .mutation(async ({ input }) => {
       let resumeUrl: string | undefined;
       let resumeKey: string | undefined;
+      let resumeInlineBase64: string | undefined;
+      let resumeStoredFileName: string | undefined;
 
-      // Upload resume to S3 if provided
       if (input.resumeBase64 && input.resumeFileName) {
-        try {
-          const buffer = Buffer.from(input.resumeBase64, "base64");
-          const fileKey = `resumes/${input.email}-${Date.now()}-${input.resumeFileName}`;
-          const result = await storagePut(fileKey, buffer, "application/pdf");
-          resumeUrl = result.url;
-          resumeKey = result.key;
-        } catch (error) {
-          console.error("Failed to upload resume:", error);
+        const safeName = sanitizeResumeFileName(input.resumeFileName);
+        const buffer = Buffer.from(input.resumeBase64, "base64");
+        const contentType = mimeTypeForResumeFileName(safeName);
+        const fileKey = `resumes/${input.email}-${Date.now()}-${safeName}`;
+
+        const forgeConfigured = Boolean(ENV.forgeApiUrl?.trim() && ENV.forgeApiKey?.trim());
+        let storedInForge = false;
+
+        if (forgeConfigured) {
+          try {
+            const result = await storagePut(fileKey, buffer, contentType);
+            resumeUrl = result.url;
+            resumeKey = result.key;
+            storedInForge = true;
+          } catch (error) {
+            console.error("[Applicants] Forge storage upload failed, using database copy:", error);
+          }
+        } else {
+          console.warn(
+            "[Applicants] BUILT_IN_FORGE_API_URL / BUILT_IN_FORGE_API_KEY not set — saving résumé in database"
+          );
+        }
+
+        // Always persist the file when Forge is missing or upload fails (fixes “No PDF” in dashboard).
+        if (!storedInForge) {
+          resumeInlineBase64 = input.resumeBase64;
+          resumeStoredFileName = safeName;
         }
       }
 
@@ -63,6 +85,8 @@ export const applicantsRouter = router({
         motivation: input.motivation,
         resumeUrl,
         resumeKey,
+        resumeInlineBase64,
+        resumeStoredFileName,
       });
 
       // Calculate and update qualification score

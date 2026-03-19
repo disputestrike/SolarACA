@@ -3,9 +3,10 @@ import { HttpError } from "@shared/_core/errors";
 import { hasAdminPermission } from "@shared/permissions";
 import { sdk } from "./sdk";
 import * as db from "../db";
+import { mimeTypeForResumeFileName } from "../resumeMime";
 
 /**
- * Admin-only resume download. Serves PDF from DB fallback or redirects to Forge URL.
+ * Admin-only résumé download. Serves file from DB (inline base64), or redirects to Forge URL.
  */
 export function registerApplicantResumeDownload(app: Express) {
   app.get("/api/applicants/:id/resume", async (req: Request, res: Response) => {
@@ -46,7 +47,8 @@ export function registerApplicantResumeDownload(app: Express) {
           return;
         }
         const fname = applicant.resumeStoredFileName || "resume.pdf";
-        res.setHeader("Content-Type", "application/pdf");
+        const contentType = mimeTypeForResumeFileName(fname);
+        res.setHeader("Content-Type", contentType);
         res.setHeader(
           "Content-Disposition",
           `inline; filename="${fname.replace(/"/g, "")}"`

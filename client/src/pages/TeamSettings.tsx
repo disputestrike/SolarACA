@@ -118,6 +118,9 @@ export default function TeamSettings() {
               <p className="text-sm text-muted-foreground">
                 Invite teammates by Google email. They sign in with Google and land on the dashboard automatically.
               </p>
+              <p className="text-xs text-muted-foreground mt-1 font-mono">
+                /dashboard/settings — master admin only (needs “manage admins” permission)
+              </p>
             </div>
           </div>
         </div>
