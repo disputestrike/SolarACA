@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -200,6 +200,19 @@ function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
               <MapPin className="h-3 w-3" />
               {app.city}
             </div>
+            <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              {app.resumeUrl ? (
+                <Badge variant="secondary" className="text-[10px] font-normal bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                  <FileText className="h-3 w-3 mr-1" />
+                  Resume
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground border-dashed">
+                  No resume file
+                </Badge>
+              )}
+              <span className="text-[10px] text-muted-foreground">Tap card for details</span>
+            </div>
           </Card>
         ))}
       </div>
@@ -210,6 +223,10 @@ function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
 function ApplicantDetailModal({ applicant, open, onOpenChange, onStatusChange }: any) {
   const [newStatus, setNewStatus] = useState<ApplicantStatus>(applicant.status as ApplicantStatus);
   const updateStatusMutation = trpc.applicants.updateStatus.useMutation();
+
+  useEffect(() => {
+    setNewStatus(applicant.status as ApplicantStatus);
+  }, [applicant.id, applicant.status]);
 
   const handleStatusUpdate = async () => {
     await updateStatusMutation.mutateAsync({ id: applicant.id, status: newStatus });
@@ -289,14 +306,31 @@ function ApplicantDetailModal({ applicant, open, onOpenChange, onStatusChange }:
           <p className="text-sm text-foreground">{applicant.motivation}</p>
         </div>
 
-        {applicant.resumeUrl && (
-          <div className="border-t border-border pt-4">
-            <a href={applicant.resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+        <div className="border-t border-border pt-4">
+          <p className="text-xs text-muted-foreground mb-2">Resume</p>
+          {applicant.resumeUrl ? (
+            <a
+              href={applicant.resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
               <FileText className="h-4 w-4" />
-              View Resume
+              Open resume (new tab)
             </a>
-          </div>
-        )}
+          ) : (
+            <div className="rounded-md border border-amber-200 bg-amber-50 text-amber-900 text-sm p-3">
+              <p className="font-medium">No resume stored for this applicant.</p>
+              <p className="text-xs mt-1 text-amber-800/90">
+                That usually means they skipped the upload step, the file wasn’t a PDF, or resume storage couldn’t upload.
+                On Railway, confirm <code className="text-[11px] bg-amber-100/80 px-1 rounded">BUILT_IN_FORGE_API_URL</code> and{" "}
+                <code className="text-[11px] bg-amber-100/80 px-1 rounded">BUILT_IN_FORGE_API_KEY</code> are set on the{" "}
+                <strong>app</strong> service (same as your working setup). Check deploy logs for “Failed to upload resume”.
+                You can ask the candidate to email their résumé or submit again with a PDF.
+              </p>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
