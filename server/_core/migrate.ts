@@ -145,7 +145,19 @@ async function sleep(ms: number) {
 export async function runMigrations(maxAttempts = 5) {
   const url = ENV.databaseUrl;
   if (!url) {
-    console.warn("[Migration] No DATABASE_URL — skipping migrations");
+    const hint = [
+      `DATABASE_URL=${Boolean(process.env.DATABASE_URL)}`,
+      `MYSQL_URL=${Boolean(process.env.MYSQL_URL)}`,
+      `MYSQL_PUBLIC_URL=${Boolean(process.env.MYSQL_PUBLIC_URL)}`,
+      `MYSQLHOST=${Boolean(process.env.MYSQLHOST)}`,
+      `MYSQLUSER=${Boolean(process.env.MYSQLUSER)}`,
+      `MYSQLPASSWORD=${Boolean(process.env.MYSQLPASSWORD)}`,
+    ].join(" ");
+    const message = `[Migration] No database connection variables found. ${hint}`;
+    if (ENV.isProduction) {
+      throw new Error(message);
+    }
+    console.warn(`${message} — skipping migrations`);
     return;
   }
 
