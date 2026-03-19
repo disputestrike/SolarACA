@@ -3,12 +3,16 @@ import { applicantsRouter } from "./applicants";
 import * as db from "../db";
 import * as storage from "../storage";
 import * as notification from "../_core/notification";
+import * as sendgrid from "../services/sendgrid";
 import type { TrpcContext } from "../_core/context";
 
 // Mock the dependencies
 vi.mock("../db");
 vi.mock("../storage");
 vi.mock("../_core/notification");
+vi.mock("../services/sendgrid", () => ({
+  sendEmail: vi.fn().mockResolvedValue({ success: true }),
+}));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -48,6 +52,7 @@ describe("applicantsRouter", () => {
       } as any);
 
       const mockNotifyOwner = vi.spyOn(notification, "notifyOwner").mockResolvedValue(true);
+      const mockSendEmail = vi.spyOn(sendgrid, "sendEmail");
 
       const caller = applicantsRouter.createCaller({} as any); // submit is public
 
@@ -74,6 +79,11 @@ describe("applicantsRouter", () => {
         resumeKey: undefined,
       });
       expect(mockNotifyOwner).toHaveBeenCalled();
+      expect(mockSendEmail).toHaveBeenCalledWith(
+        "john@example.com",
+        expect.any(String),
+        expect.stringContaining("John")
+      );
     });
 
     it("should submit an application with resume", async () => {
@@ -92,6 +102,7 @@ describe("applicantsRouter", () => {
       });
 
       const mockNotifyOwner = vi.spyOn(notification, "notifyOwner").mockResolvedValue(true);
+      vi.spyOn(sendgrid, "sendEmail").mockResolvedValue({ success: true });
 
       const caller = applicantsRouter.createCaller({} as any); // submit is public
 

@@ -12,7 +12,7 @@ export const messageTemplates = {
     sms: "Hi {name}! We received your application for Florida Solar Sales Academy. We'll review it and be in touch soon. Exciting times ahead!",
     email: {
       subject: "Application Received - Florida Solar Sales Academy",
-      body: "Hi {name},\n\nThank you for applying to Florida Solar Sales Academy! We're excited to review your application and learn more about your interest in building a career in solar energy.\n\nWe'll be in touch within 24-48 hours with next steps.\n\nBest regards,\nFlorida Solar Sales Academy Team",
+      body: "Hi {name},\n\nThank you for applying to Florida Solar Sales Academy — we've received your application and resume (if you attached one).\n\nOur team reviews every submission. If your background is a strong fit, someone will reach out within 24–48 hours to schedule a phone screen.\n\nThank you for your interest in solar sales.\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
   interviewScheduled: {
@@ -46,7 +46,7 @@ export const messageTemplates = {
 };
 
 // Function to replace template variables
-function replaceTemplateVariables(
+export function replaceTemplateVariables(
   text: string,
   variables: Record<string, string>
 ): string {

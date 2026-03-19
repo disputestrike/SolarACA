@@ -50,8 +50,12 @@ Optional (messaging):
 | `TWILIO_ACCOUNT_SID` | From Twilio console |
 | `TWILIO_AUTH_TOKEN` | From Twilio console |
 | `TWILIO_PHONE_NUMBER` | E.164 format e.g. +15551234567 |
-| `SENDGRID_API_KEY` | From SendGrid dashboard |
-| `CALENDLY_API_KEY` | From Calendly integrations page |
+| `SENDGRID_API_KEY` | From SendGrid — **set this** so candidates get an automatic “application received” email after `/apply` |
+| `SENDGRID_FROM_EMAIL` | Verified sender in SendGrid |
+| `SENDGRID_FROM_NAME` | Optional display name |
+| `CALENDLY_API_KEY` | From Calendly integrations page (optional) |
+
+**Resumes:** Stored via Forge when `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY` are set; the dashboard shows **View Resume** when a URL was saved.
 
 ---
 

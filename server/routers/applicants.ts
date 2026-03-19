@@ -11,6 +11,8 @@ import {
 } from "../db";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
+import { sendEmail } from "../services/sendgrid";
+import { messageTemplates, replaceTemplateVariables } from "./communications";
 
 export const applicantsRouter = router({
   // Submit a new application with optional resume
@@ -67,11 +69,27 @@ export const applicantsRouter = router({
         await updateApplicantQualificationScore(applicant.id, qualificationScore);
       }
 
-      // Notify owner of new application
-      await notifyOwner({
-        title: "New Application Received",
-        content: `${input.firstName} ${input.lastName} from ${input.city} has applied (Score: ${qualificationScore}/100). Email: ${input.email}, Phone: ${input.phone}`,
-      });
+      // Confirmation email to the candidate (SendGrid — real send when SENDGRID_API_KEY is set)
+      try {
+        const tpl = messageTemplates.applicationReceived.email;
+        await sendEmail(
+          input.email,
+          tpl.subject,
+          replaceTemplateVariables(tpl.body, { name: input.firstName })
+        );
+      } catch (err) {
+        console.error("[Applicants] Confirmation email failed (application still saved):", err);
+      }
+
+      // Notify owner via internal service if configured (never block submit)
+      try {
+        await notifyOwner({
+          title: "New Application Received",
+          content: `${input.firstName} ${input.lastName} from ${input.city} has applied (Score: ${qualificationScore}/100). Email: ${input.email}, Phone: ${input.phone}`,
+        });
+      } catch (err) {
+        console.warn("[Applicants] Owner notification skipped or failed:", err);
+      }
 
       return {
         success: true,
