@@ -216,10 +216,12 @@ export async function runMigrations(maxAttempts = 5) {
       }
       console.log("[Migration] Seed data inserted");
 
-      // Idempotent columns for existing DBs created before resume fallback / inline storage
+      // Idempotent columns for existing DBs (CREATE TABLE IF NOT EXISTS does not add new columns)
       const patches = [
         "ALTER TABLE `applicants` ADD COLUMN `resumeInlineBase64` MEDIUMTEXT NULL",
         "ALTER TABLE `applicants` ADD COLUMN `resumeStoredFileName` VARCHAR(260) NULL",
+        "ALTER TABLE `users` ADD COLUMN `adminTier` VARCHAR(32) NULL",
+        "ALTER TABLE `users` ADD COLUMN `adminPermissions` TEXT NULL",
       ];
       for (const patch of patches) {
         try {
