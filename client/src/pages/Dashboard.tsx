@@ -181,13 +181,30 @@ export default function Dashboard() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 overflow-x-auto pb-2">
-            <KanbanColumn title="New" count={groupedApplicants.new.length} color="blue" applicants={groupedApplicants.new} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
-            <KanbanColumn title="Screened" count={groupedApplicants.screened.length} color="purple" applicants={groupedApplicants.screened} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
-            <KanbanColumn title="Interviewed" count={groupedApplicants.interviewed.length} color="yellow" applicants={groupedApplicants.interviewed} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
-            <KanbanColumn title="Offered" count={groupedApplicants.offered.length} color="green" applicants={groupedApplicants.offered} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
-            <KanbanColumn title="Hired" count={groupedApplicants.hired.length} color="emerald" applicants={groupedApplicants.hired} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
-            <KanbanColumn title="Rejected" count={groupedApplicants.rejected.length} color="red" applicants={groupedApplicants.rejected} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto pb-2">
+            {(
+              [
+                ["New", "blue", groupedApplicants.new],
+                ["Screened", "purple", groupedApplicants.screened],
+                ["Interviewed", "yellow", groupedApplicants.interviewed],
+                ["Offered", "green", groupedApplicants.offered],
+                ["Hired", "emerald", groupedApplicants.hired],
+                ["Rejected", "red", groupedApplicants.rejected],
+              ] as const
+            ).map(([title, color, applicants]) => (
+              <KanbanColumn
+                key={title}
+                title={title}
+                count={applicants.length}
+                color={color}
+                applicants={applicants}
+                canViewResume={Boolean(user?.effectivePermissions?.["applicants.view_resume"])}
+                onSelect={(app: any) => {
+                  setSelectedApplicant(app);
+                  setIsDetailOpen(true);
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -209,7 +226,21 @@ export default function Dashboard() {
   );
 }
 
-function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
+function KanbanColumn({
+  title,
+  count,
+  color,
+  applicants,
+  canViewResume,
+  onSelect,
+}: {
+  title: string;
+  count: number;
+  color: string;
+  applicants: any[];
+  canViewResume: boolean;
+  onSelect: (app: any) => void;
+}) {
   const colorMap: Record<string, string> = {
     blue: "bg-blue-500",
     purple: "bg-purple-500",
@@ -220,54 +251,79 @@ function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
   };
 
   return (
-    <div className="bg-muted/50 rounded-lg p-4 min-h-96">
-      <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-        <span className={`h-3 w-3 rounded-full ${colorMap[color]}`}></span>
-        {title} ({count})
+    <div className="bg-muted/50 rounded-lg p-2 sm:p-3 min-h-[min(24rem,70vh)]">
+      <h2 className="font-semibold text-sm mb-2 flex items-center gap-1.5 leading-none">
+        <span className={`h-2 w-2 rounded-full shrink-0 ${colorMap[color]}`} />
+        <span className="truncate">
+          {title} <span className="text-muted-foreground font-normal">({count})</span>
+        </span>
       </h2>
-      <div className="space-y-3">
-        {applicants.map((app: any) => (
-          <Card key={app.id} className="p-3 cursor-pointer hover:shadow-md transition bg-background" onClick={() => onSelect(app)}>
-            <p className="font-semibold text-sm">{app.firstName} {app.lastName}</p>
-            <p className="text-xs text-muted-foreground truncate">{app.email}</p>
-            {app.isReapplication && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                <Badge className="text-[10px] font-normal bg-orange-100 text-orange-900 hover:bg-orange-100">
-                  Reapply
-                </Badge>
-                {typeof app.emailApplicationTotal === "number" && app.emailApplicationTotal > 1 && (
-                  <Badge variant="outline" className="text-[10px] font-normal">
-                    {app.emailApplicationTotal} apps this email
+      <div className="space-y-1.5">
+        {applicants.map((app: any) => {
+          const hasResume = Boolean(app.resumeUrl || app.hasResumeBlob);
+          const resumeHref = app.resumeUrl || `/api/applicants/${app.id}/resume`;
+          return (
+            <div
+              key={app.id}
+              role="button"
+              tabIndex={0}
+              className="rounded-md border border-border/80 bg-card text-card-foreground p-2 cursor-pointer hover:shadow-sm hover:border-border transition-shadow flex flex-col gap-0"
+              onClick={() => onSelect(app)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(app);
+                }
+              }}
+              aria-label={`${app.firstName} ${app.lastName}, ${app.city}. Open details.`}
+            >
+              <div className="flex items-start justify-between gap-1.5 min-w-0">
+                <p className="font-semibold text-xs leading-tight truncate min-w-0">
+                  {app.firstName} {app.lastName}
+                </p>
+                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0 max-w-[42%]">
+                  <MapPin className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
+                  <span className="truncate">{app.city}</span>
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-tight" title={app.email}>
+                {app.email}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5 min-h-[1.125rem]">
+                {app.isReapplication && (
+                  <Badge className="h-5 px-1.5 py-0 text-[9px] font-medium leading-none bg-orange-100 text-orange-900 hover:bg-orange-100 border-0">
+                    Reapply
                   </Badge>
                 )}
+                {typeof app.emailApplicationTotal === "number" && app.emailApplicationTotal > 1 && (
+                  <Badge variant="outline" className="h-5 px-1.5 py-0 text-[9px] font-normal leading-none border-muted-foreground/25">
+                    {app.isReapplication ? `${app.emailApplicationTotal}× email` : `1st · ${app.emailApplicationTotal}×`}
+                  </Badge>
+                )}
+                <span className="ml-auto shrink-0 pl-0.5" onClick={(e) => e.stopPropagation()}>
+                  {hasResume && canViewResume ? (
+                    <a
+                      href={resumeHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 hover:text-emerald-800 hover:underline"
+                      title="Open résumé PDF"
+                    >
+                      <FileText className="h-3 w-3" aria-hidden />
+                      Résumé
+                    </a>
+                  ) : hasResume ? (
+                    <span className="text-[9px] text-muted-foreground" title="Open details to request access">
+                      Résumé · locked
+                    </span>
+                  ) : (
+                    <span className="text-[9px] text-muted-foreground/90">No PDF</span>
+                  )}
+                </span>
               </div>
-            )}
-            {!app.isReapplication && typeof app.emailApplicationTotal === "number" && app.emailApplicationTotal > 1 && (
-              <div className="mt-1">
-                <Badge variant="outline" className="text-[10px] font-normal">
-                  1st application · {app.emailApplicationTotal} total with this email
-                </Badge>
-              </div>
-            )}
-            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              {app.city}
             </div>
-            <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-              {app.resumeUrl || app.hasResumeBlob ? (
-                <Badge variant="secondary" className="text-[10px] font-normal bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
-                  <FileText className="h-3 w-3 mr-1" />
-                  Resume
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground border-dashed">
-                  No resume file
-                </Badge>
-              )}
-              <span className="text-[10px] text-muted-foreground">Tap card for details</span>
-            </div>
-          </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
