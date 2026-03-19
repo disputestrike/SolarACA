@@ -155,6 +155,18 @@ export const testimonials = mysqlTable("testimonials", {
 export type Testimonial = typeof testimonials.$inferSelect;
 export type InsertTestimonial = typeof testimonials.$inferInsert;
 
+/** Homepage “stay in the loop” signups (not full applications). */
+export const talentInterest = mysqlTable("talentInterest", {
+  id: int("id").autoincrement().primaryKey(),
+  firstName: varchar("firstName", { length: 100 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  city: varchar("city", { length: 100 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TalentInterest = typeof talentInterest.$inferSelect;
+export type InsertTalentInterest = typeof talentInterest.$inferInsert;
+
 // Training modules for onboarding
 export const trainingModules = mysqlTable("trainingModules", {
   id: int("id").autoincrement().primaryKey(),

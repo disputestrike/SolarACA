@@ -115,6 +115,15 @@ const TABLES = [
     \`order\`       INT NOT NULL DEFAULT 0,
     \`createdAt\`   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+  `CREATE TABLE IF NOT EXISTS \`talentInterest\` (
+    \`id\`        INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    \`firstName\` VARCHAR(100) NOT NULL,
+    \`email\`     VARCHAR(320) NOT NULL,
+    \`city\`      VARCHAR(100) NOT NULL,
+    \`createdAt\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX \`idx_talent_interest_email\` (\`email\`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 ];
 
 const SEEDS = [

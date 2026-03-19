@@ -3,7 +3,7 @@ import { ENV } from "./_core/env";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import type { User } from "../drizzle/schema";
-import { InsertUser, users, staffGrants } from "../drizzle/schema";
+import { InsertUser, users, staffGrants, talentInterest } from "../drizzle/schema";
 import { applicants } from "../drizzle/schema";
 
 /** DB missing new columns/tables after deploy (migrations not applied yet). */
@@ -277,6 +277,20 @@ export async function updateUserAdminProfile(
       updatedAt: new Date(),
     })
     .where(and(eq(users.openId, openId), eq(users.role, "admin")));
+}
+
+export async function insertTalentInterest(data: {
+  firstName: string;
+  email: string;
+  city: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(talentInterest).values({
+    firstName: data.firstName,
+    email: data.email,
+    city: data.city,
+  });
 }
 
 // Applicant queries

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,15 @@ export default function Apply() {
     motivation: "",
     resume: null as File | null,
   });
+
+  useEffect(() => {
+    const track = new URLSearchParams(window.location.search).get("track");
+    if (track === "rep") {
+      setFormData((prev) => ({ ...prev, experienceLevel: "entry_level" }));
+    } else if (track === "leader") {
+      setFormData((prev) => ({ ...prev, experienceLevel: "aspiring_leader" }));
+    }
+  }, []);
 
   const submitMutation = trpc.applicants.submit.useMutation();
 

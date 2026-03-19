@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useLocation } from "wouter";
-import { ArrowRight, Zap, Leaf, TrendingUp, Users, Sun, MapPin, DollarSign, Shield, Brain, Phone, Mail, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { Link, useLocation } from "wouter";
+import { ArrowRight, Zap, Leaf, TrendingUp, Users, Sun, MapPin, DollarSign, Shield, Brain, Phone, Mail, CheckCircle, XCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 const IMAGES = {
@@ -48,6 +53,89 @@ const cities = [
   { name: "Miami", description: "Premium market with excellent earning potential and year-round sunshine", icon: "🌊" },
   { name: "Fort Lauderdale", description: "Established territory with strong community support and solar adoption", icon: "☀️" },
 ];
+
+function TalentWaitlistSection() {
+  const [firstName, setFirstName] = useState("");
+  const [email, setEmail] = useState("");
+  const [city, setCity] = useState<"Tampa" | "Miami" | "Fort Lauderdale" | "Other">("Tampa");
+  const [done, setDone] = useState(false);
+  const joinMutation = trpc.talent.joinWaitlist.useMutation({
+    onSuccess: () => {
+      setDone(true);
+      toast.success("You're on the list!");
+    },
+    onError: (err) => toast.error(err.message || "Something went wrong"),
+  });
+
+  if (done) {
+    return (
+      <p className="text-center text-lg font-medium text-primary">
+        You&apos;re on the list. We&apos;ll be in touch when something opens up near you. 🌞
+      </p>
+    );
+  }
+
+  return (
+    <form
+      className="max-w-md mx-auto space-y-4 text-left"
+      onSubmit={(e) => {
+        e.preventDefault();
+        joinMutation.mutate({ firstName: firstName.trim(), email: email.trim(), city });
+      }}
+    >
+      <div>
+        <Label htmlFor="talent-first">First Name</Label>
+        <Input
+          id="talent-first"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+          className="mt-1.5"
+          autoComplete="given-name"
+        />
+      </div>
+      <div>
+        <Label htmlFor="talent-email">Email Address</Label>
+        <Input
+          id="talent-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="mt-1.5"
+          autoComplete="email"
+        />
+      </div>
+      <div>
+        <Label>City</Label>
+        <Select value={city} onValueChange={(v) => setCity(v as typeof city)}>
+          <SelectTrigger className="mt-1.5">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Tampa">Tampa</SelectItem>
+            <SelectItem value="Miami">Miami</SelectItem>
+            <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
+            <SelectItem value="Other">Other</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <Button type="submit" className="w-full" disabled={joinMutation.isPending}>
+        {joinMutation.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Sending…
+          </>
+        ) : (
+          <>
+            Keep Me Posted <ArrowRight className="ml-2 h-4 w-4" />
+          </>
+        )}
+      </Button>
+      <p className="text-sm text-muted-foreground text-center">No spam. Just real opportunities when they open up near you.</p>
+    </form>
+  );
+}
 
 const faqs = [
   {
@@ -105,14 +193,15 @@ export default function Home() {
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-primary flex items-center gap-2">
+          <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-2 hover:opacity-90 transition">
             <Sun className="h-7 w-7" />
             Florida Solar Sales Academy
-          </div>
+          </Link>
           <div className="hidden md:flex items-center gap-6">
             <a href="#problem" className="text-sm text-muted-foreground hover:text-primary transition">Why Solar</a>
             <a href="#what-you-get" className="text-sm text-muted-foreground hover:text-primary transition">What You Get</a>
             <a href="#locations" className="text-sm text-muted-foreground hover:text-primary transition">Locations</a>
+            <a href="#talent-community" className="text-sm text-muted-foreground hover:text-primary transition">Stay in the Loop</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-primary transition">FAQ</a>
           </div>
           <Button onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -183,6 +272,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Role tracks + selective hiring */}
+      <section className="py-20 px-4 bg-background">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl font-bold mb-4">Two Paths. One Academy. <span className="text-primary">Both Win.</span></h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Whether you want to own a territory in the field or grow into leadership, we train you for a solar career with real upside.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+            <Card className="p-8 border-border hover:border-primary/50 transition-all flex flex-col h-full">
+              <h3 className="text-2xl font-bold text-primary mb-2">Sales Rep</h3>
+              <p className="text-muted-foreground mb-6 flex-1 leading-relaxed">
+                Master our system, work your market, and earn uncapped commission with a mentor in your corner from day one.
+              </p>
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/apply?track=rep")}>
+                Apply as Sales Rep <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Card>
+            <Card className="p-8 border-border hover:border-primary/50 transition-all flex flex-col h-full">
+              <h3 className="text-2xl font-bold text-primary mb-2">Sales Leader</h3>
+              <p className="text-muted-foreground mb-6 flex-1 leading-relaxed">
+                Build, coach, and scale a team — with leadership paths and overrides that reward how you grow others.
+              </p>
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/apply?track=leader")}>
+                Apply as Sales Leader <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Card>
+          </div>
+          <div className="max-w-3xl mx-auto text-center bg-muted/50 border border-border rounded-2xl p-10">
+            <h3 className="text-2xl font-bold mb-4">We&apos;re Selective</h3>
+            <p className="text-muted-foreground mb-8 leading-relaxed">
+              We don&apos;t hire everyone. We look for drive, coachability, and integrity — people who want to build a career, not just punch a clock.
+            </p>
+            <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
+              Think You Have What It Takes? Apply Now <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* NEW: The Problem / The Solution */}
       <section id="problem" className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
@@ -243,10 +373,15 @@ export default function Home() {
       <section className="py-16 px-4 bg-background">
         <div className="container mx-auto max-w-3xl text-center">
           <div className="bg-muted/50 border border-border rounded-2xl p-10">
-            <p className="text-2xl md:text-3xl font-bold italic leading-relaxed text-foreground mb-6">
-              "I want to make real money but I don't know where to start. I'm tired of jobs with no ceiling and no future. I want a career where my effort actually equals my income — and where I can build something real."
+            <div className="text-2xl md:text-3xl font-bold italic leading-relaxed text-foreground mb-6 space-y-3">
+              <p className="m-0">&ldquo;I want to make real money — but I don&apos;t know where to start.</p>
+              <p className="m-0">I&apos;m tired of jobs with a ceiling on my income and no real future.</p>
+              <p className="m-0">I want something where my effort actually determines what I earn…</p>
+              <p className="m-0">and where I can build something real.&rdquo;</p>
+            </div>
+            <p className="text-lg text-muted-foreground mb-8">
+              If that&apos;s been on your mind — you&apos;re exactly where you need to be.
             </p>
-            <p className="text-lg text-muted-foreground mb-8">If that's in your head right now — you're in the right place.</p>
             <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
               Apply Now — Takes 5 Minutes <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -467,6 +602,17 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Waitlist / talent capture */}
+      <section id="talent-community" className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="text-4xl font-bold mb-4">Not Ready Yet? <span className="text-primary">Stay in the Loop</span></h2>
+          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
+            Share your name and email — we&apos;ll notify you when hiring opens or events pop up near you.
+          </p>
+          <TalentWaitlistSection />
+        </div>
+      </section>
+
       {/* NEW: FAQ */}
       <section id="faq" className="py-20 px-4 bg-background">
         <div className="container mx-auto max-w-3xl">
@@ -535,9 +681,9 @@ export default function Home() {
         <div className="container mx-auto max-w-5xl">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
-              <div className="text-xl font-bold text-primary flex items-center gap-2 mb-4">
+              <Link href="/" className="text-xl font-bold text-primary flex items-center gap-2 mb-4 hover:opacity-90 transition">
                 <Sun className="h-6 w-6" /> Florida Solar Sales Academy
-              </div>
+              </Link>
               <p className="text-sm text-muted-foreground">Building the next generation of solar energy professionals across Florida.</p>
             </div>
             <div>
