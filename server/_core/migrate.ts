@@ -117,33 +117,79 @@ const SEEDS = [
     ('Management Fundamentals','Territory management and performance tracking','management',45,1)`,
 ];
 
-export async function runMigrations() {
+function shouldEnableSsl(url: string) {
+  try {
+    const parsed = new URL(url);
+    const ssl = (parsed.searchParams.get("ssl") || "").toLowerCase();
+    const sslMode = (parsed.searchParams.get("sslmode") || "").toLowerCase();
+    const sslAccept = (parsed.searchParams.get("sslaccept") || "").toLowerCase();
+    return ssl === "true" || sslMode === "require" || sslAccept === "strict";
+  } catch {
+    return false;
+  }
+}
+
+function getSafeDbTarget(url: string) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}:${parsed.port || "3306"}/${parsed.pathname.replace(/^\//, "") || "<none>"}`;
+  } catch {
+    return "<invalid DATABASE_URL>";
+  }
+}
+
+async function sleep(ms: number) {
+  await new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function runMigrations(maxAttempts = 5) {
   const url = ENV.databaseUrl;
   if (!url) {
     console.warn("[Migration] No DATABASE_URL — skipping migrations");
     return;
   }
 
-  let conn: mysql.Connection | null = null;
-  try {
-    conn = await mysql.createConnection(url);
-    console.log("[Migration] Connected to MySQL");
+  const target = getSafeDbTarget(url);
+  const useSsl = shouldEnableSsl(url);
 
-    for (const sql of TABLES) {
-      await conn.execute(sql);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let conn: mysql.Connection | null = null;
+
+    try {
+      conn = await mysql.createConnection({
+        uri: url,
+        // Railway public endpoints often require TLS; internal endpoints typically don't.
+        ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+      });
+      console.log(`[Migration] Connected to MySQL (${target}) [attempt ${attempt}/${maxAttempts}]`);
+
+      const [rows] = await conn.query<any[]>("SELECT DATABASE() as currentDb");
+      const currentDb = rows?.[0]?.currentDb as string | null | undefined;
+      if (!currentDb && ENV.databaseName) {
+        await conn.query(`CREATE DATABASE IF NOT EXISTS \`${ENV.databaseName}\``);
+        await conn.query(`USE \`${ENV.databaseName}\``);
+      }
+
+      for (const sql of TABLES) {
+        await conn.execute(sql);
+      }
+      console.log("[Migration] All tables created/verified");
+
+      for (const sql of SEEDS) {
+        await conn.execute(sql);
+      }
+      console.log("[Migration] Seed data inserted");
+      console.log("[Migration] Complete ✓");
+      return;
+    } catch (err: any) {
+      const message = err?.message || String(err);
+      console.error(`[Migration] Attempt ${attempt}/${maxAttempts} failed: ${message}`);
+      if (attempt === maxAttempts) {
+        throw new Error(`[Migration] Could not complete migrations after ${maxAttempts} attempts: ${message}`);
+      }
+      await sleep(2000 * attempt);
+    } finally {
+      if (conn) await conn.end();
     }
-    console.log("[Migration] All tables created/verified");
-
-    for (const sql of SEEDS) {
-      await conn.execute(sql);
-    }
-    console.log("[Migration] Seed data inserted");
-
-    console.log("[Migration] Complete ✓");
-  } catch (err: any) {
-    console.error("[Migration] Failed:", err.message);
-    // Don't crash the app — log and continue
-  } finally {
-    if (conn) await conn.end();
   }
 }

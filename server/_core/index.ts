@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { runMigrations } from "./migrate";
+import { ENV } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -29,12 +30,15 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
-  // Auto-create tables on every startup (idempotent - uses IF NOT EXISTS)
-  // Wrapped so a DB failure never prevents the HTTP server from starting
+  // Auto-create tables on startup. In production we fail fast so deploys do not
+  // silently go live without database tables.
   try {
     await runMigrations();
   } catch (err) {
-    console.error('[Startup] Migration error (non-fatal):', err);
+    console.error("[Startup] Migration error:", err);
+    if (ENV.isProduction) {
+      throw err;
+    }
   }
 
   const app = express();
