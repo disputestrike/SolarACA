@@ -166,6 +166,24 @@ async function sleep(ms: number) {
   await new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/** mysql2 `execute()` uses prepared statements — DDL like ALTER often must use `query()` instead. */
+async function mysqlColumnExists(conn: mysql.Connection, table: string, column: string): Promise<boolean> {
+  const [rows] = await conn.query(`SHOW COLUMNS FROM \`${table}\` LIKE ?`, [column]);
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function ensureMysqlColumn(conn: mysql.Connection, table: string, column: string, alterSql: string): Promise<void> {
+  if (await mysqlColumnExists(conn, table, column)) {
+    return;
+  }
+  console.log(`[Migration] Adding column ${table}.${column} (existing table)`);
+  await conn.query(alterSql);
+  if (!(await mysqlColumnExists(conn, table, column))) {
+    throw new Error(`[Migration] Column ${table}.${column} still missing after ALTER`);
+  }
+  console.log(`[Migration] Column ${table}.${column} OK`);
+}
+
 export async function runMigrations(maxAttempts = 5) {
   const url = ENV.databaseUrl;
   if (!url) {
@@ -216,35 +234,34 @@ export async function runMigrations(maxAttempts = 5) {
       }
       console.log("[Migration] Seed data inserted");
 
-      // Idempotent columns for existing DBs (CREATE TABLE IF NOT EXISTS does not add new columns)
-      const patches = [
-        "ALTER TABLE `applicants` ADD COLUMN `resumeInlineBase64` MEDIUMTEXT NULL",
-        "ALTER TABLE `applicants` ADD COLUMN `resumeStoredFileName` VARCHAR(260) NULL",
-        "ALTER TABLE `users` ADD COLUMN `adminTier` VARCHAR(32) NULL",
-        "ALTER TABLE `users` ADD COLUMN `adminPermissions` TEXT NULL",
-      ];
-      for (const patch of patches) {
-        try {
-          await conn.execute(patch);
-        } catch (e: any) {
-          const msg = String(e?.message || e);
-          if (
-            !msg.includes("1060") &&
-            !msg.includes("Duplicate column") &&
-            !msg.includes("1050") &&
-            !msg.includes("already exists")
-          ) {
-            console.warn("[Migration] Column patch note:", msg);
-          }
-        }
-      }
+      // Idempotent columns for existing DBs (CREATE TABLE IF NOT EXISTS does not add new columns).
+      // Use conn.query() — conn.execute() prepared-statement path is unreliable for ALTER TABLE on mysql2.
+      await ensureMysqlColumn(
+        conn,
+        "applicants",
+        "resumeInlineBase64",
+        "ALTER TABLE `applicants` ADD COLUMN `resumeInlineBase64` MEDIUMTEXT NULL"
+      );
+      await ensureMysqlColumn(
+        conn,
+        "applicants",
+        "resumeStoredFileName",
+        "ALTER TABLE `applicants` ADD COLUMN `resumeStoredFileName` VARCHAR(260) NULL"
+      );
+      await ensureMysqlColumn(conn, "users", "adminTier", "ALTER TABLE `users` ADD COLUMN `adminTier` VARCHAR(32) NULL");
+      await ensureMysqlColumn(
+        conn,
+        "users",
+        "adminPermissions",
+        "ALTER TABLE `users` ADD COLUMN `adminPermissions` TEXT NULL"
+      );
 
       try {
-        await conn.execute(
+        await conn.query(
           "UPDATE `users` SET `adminTier` = 'super_admin' WHERE `role` = 'admin' AND (`adminTier` IS NULL OR `adminTier` = '')"
         );
       } catch (e: any) {
-        console.warn("[Migration] adminTier backfill note:", String(e?.message || e));
+        console.warn("[Migration] adminTier backfill note:", String(e?.sqlMessage || e?.message || e));
       }
 
       console.log("[Migration] Complete ✓");
