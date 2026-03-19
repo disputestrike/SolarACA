@@ -1,4 +1,4 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { ENV } from './_core/env';
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users } from "../drizzle/schema";
@@ -99,11 +99,13 @@ export async function createApplicant(data: {
   motivation: string;
   resumeUrl?: string;
   resumeKey?: string;
+  resumeInlineBase64?: string;
+  resumeStoredFileName?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(applicants).values({
+  await db.insert(applicants).values({
     firstName: data.firstName,
     lastName: data.lastName,
     email: data.email,
@@ -113,6 +115,8 @@ export async function createApplicant(data: {
     motivation: data.motivation,
     resumeUrl: data.resumeUrl || undefined,
     resumeKey: data.resumeKey || undefined,
+    resumeInlineBase64: data.resumeInlineBase64 || undefined,
+    resumeStoredFileName: data.resumeStoredFileName || undefined,
     status: "new",
     qualificationScore: 0,
   });
@@ -125,6 +129,39 @@ export async function createApplicant(data: {
     .limit(1);
 
   return createdApplicant[0] || null;
+}
+
+/** Set public/download URL after insert when resume is stored inline (DB fallback). */
+export async function updateApplicantResumeUrl(id: number, resumeUrl: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(applicants)
+    .set({ resumeUrl, updatedAt: new Date() })
+    .where(eq(applicants.id, id));
+}
+
+export type ApplicantEmailStats = { total: number; firstId: number };
+
+/** All-time counts per email (for re-apply / duplicate detection). */
+export async function getApplicantEmailStatsMap(): Promise<Map<string, ApplicantEmailStats>> {
+  const db = await getDb();
+  if (!db) return new Map();
+
+  const rows = await db
+    .select({
+      email: applicants.email,
+      total: sql<number>`cast(count(*) as unsigned)`.mapWith(Number),
+      firstId: sql<number>`min(${applicants.id})`.mapWith(Number),
+    })
+    .from(applicants)
+    .groupBy(applicants.email);
+
+  const map = new Map<string, ApplicantEmailStats>();
+  for (const r of rows) {
+    map.set(r.email.toLowerCase(), { total: r.total, firstId: r.firstId });
+  }
+  return map;
 }
 
 export async function getApplicants(filters?: {
@@ -192,6 +229,7 @@ export async function getApplicantStats() {
     interviewed: countByStatus("interviewed"),
     offered: countByStatus("offered"),
     hired: countByStatus("hired"),
+    rejected: countByStatus("rejected"),
   };
 }
 

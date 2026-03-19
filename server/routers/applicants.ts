@@ -8,6 +8,8 @@ import {
   getApplicantStats,
   calculateQualificationScore,
   updateApplicantQualificationScore,
+  updateApplicantResumeUrl,
+  getApplicantEmailStatsMap,
 } from "../db";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
@@ -107,8 +109,23 @@ export const applicantsRouter = router({
       }).optional()
     )
     .query(async ({ input }) => {
-      const applicants = await getApplicants(input);
-      return applicants;
+      const rows = await getApplicants(input);
+      const emailStats = await getApplicantEmailStatsMap();
+      return rows.map((a) => {
+        const { resumeInlineBase64: _blob, ...rest } = a;
+        const key = a.email.toLowerCase();
+        const stat = emailStats.get(key);
+        const totalForEmail = stat?.total ?? 1;
+        const firstId = stat?.firstId ?? a.id;
+        const hasResumeBlob = Boolean(_blob && String(_blob).length > 0);
+        return {
+          ...rest,
+          hasResumeBlob,
+          emailApplicationTotal: totalForEmail,
+          isReapplication: totalForEmail > 1 && a.id !== firstId,
+          applicationOrdinal: a.id === firstId ? 1 : undefined,
+        };
+      });
     }),
 
   // Get a single applicant by ID (admin only)

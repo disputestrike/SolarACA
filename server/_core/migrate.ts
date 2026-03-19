@@ -26,6 +26,8 @@ const TABLES = [
     \`motivation\`           TEXT,
     \`resumeUrl\`            VARCHAR(500),
     \`resumeKey\`            VARCHAR(500),
+    \`resumeInlineBase64\`   MEDIUMTEXT NULL,
+    \`resumeStoredFileName\` VARCHAR(260) NULL,
     \`status\`               ENUM('new','screened','interviewed','offered','hired','rejected') NOT NULL DEFAULT 'new',
     \`qualificationScore\`   INT NOT NULL DEFAULT 0,
     \`interviewScheduledAt\` TIMESTAMP NULL,
@@ -191,6 +193,23 @@ export async function runMigrations(maxAttempts = 5) {
         await conn.execute(sql);
       }
       console.log("[Migration] Seed data inserted");
+
+      // Idempotent columns for existing DBs created before resume fallback / inline storage
+      const patches = [
+        "ALTER TABLE `applicants` ADD COLUMN `resumeInlineBase64` MEDIUMTEXT NULL",
+        "ALTER TABLE `applicants` ADD COLUMN `resumeStoredFileName` VARCHAR(260) NULL",
+      ];
+      for (const patch of patches) {
+        try {
+          await conn.execute(patch);
+        } catch (e: any) {
+          const msg = String(e?.message || e);
+          if (!msg.includes("1060") && !msg.includes("Duplicate column")) {
+            console.warn("[Migration] Column patch note:", msg);
+          }
+        }
+      }
+
       console.log("[Migration] Complete ✓");
       return;
     } catch (err: any) {

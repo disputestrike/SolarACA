@@ -1,4 +1,21 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+  decimal,
+  boolean,
+  customType,
+} from "drizzle-orm/mysql-core";
+
+/** MEDIUMTEXT — stores base64 resume when external storage (Forge) fails */
+const mediumText = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "mediumtext";
+  },
+});
 
 /**
  * Core user table backing auth flow.
@@ -37,6 +54,9 @@ export const applicants = mysqlTable("applicants", {
   motivation: text("motivation"),
   resumeUrl: varchar("resumeUrl", { length: 500 }),
   resumeKey: varchar("resumeKey", { length: 500 }),
+  /** PDF bytes as base64 when Forge upload fails; prefer resumeUrl when set */
+  resumeInlineBase64: mediumText("resumeInlineBase64"),
+  resumeStoredFileName: varchar("resumeStoredFileName", { length: 260 }),
   status: mysqlEnum("status", ["new", "screened", "interviewed", "offered", "hired", "rejected"]).default("new").notNull(),
   qualificationScore: int("qualificationScore").default(0).notNull(),
   interviewScheduledAt: timestamp("interviewScheduledAt"),

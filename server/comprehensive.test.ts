@@ -86,6 +86,7 @@ describe("SMOKE TESTS - All endpoints respond", () => {
     expect(result).toHaveProperty("interviewed");
     expect(result).toHaveProperty("offered");
     expect(result).toHaveProperty("hired");
+    expect(result).toHaveProperty("rejected");
     expect(typeof result.total).toBe("number");
   });
 

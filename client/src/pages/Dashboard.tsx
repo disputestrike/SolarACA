@@ -64,6 +64,7 @@ export default function Dashboard() {
     interviewed: filteredApplicants.filter((a: any) => a.status === "interviewed"),
     offered: filteredApplicants.filter((a: any) => a.status === "offered"),
     hired: filteredApplicants.filter((a: any) => a.status === "hired"),
+    rejected: filteredApplicants.filter((a: any) => a.status === "rejected"),
   };
 
   return (
@@ -110,12 +111,13 @@ export default function Dashboard() {
                 <SelectItem value="interviewed">Interviewed</SelectItem>
                 <SelectItem value="offered">Offered</SelectItem>
                 <SelectItem value="hired">Hired</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {statsQuery.data && (
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-xs text-muted-foreground">Total</p>
                 <p className="text-2xl font-bold">{statsQuery.data.total}</p>
@@ -140,6 +142,10 @@ export default function Dashboard() {
                 <p className="text-xs text-emerald-600">Hired</p>
                 <p className="text-2xl font-bold text-emerald-700">{statsQuery.data.hired}</p>
               </div>
+              <div className="bg-red-50 p-4 rounded-lg">
+                <p className="text-xs text-red-600">Rejected</p>
+                <p className="text-2xl font-bold text-red-700">{"rejected" in statsQuery.data ? (statsQuery.data as any).rejected : 0}</p>
+              </div>
             </div>
           )}
         </div>
@@ -151,12 +157,13 @@ export default function Dashboard() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 overflow-x-auto pb-2">
             <KanbanColumn title="New" count={groupedApplicants.new.length} color="blue" applicants={groupedApplicants.new} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
             <KanbanColumn title="Screened" count={groupedApplicants.screened.length} color="purple" applicants={groupedApplicants.screened} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
             <KanbanColumn title="Interviewed" count={groupedApplicants.interviewed.length} color="yellow" applicants={groupedApplicants.interviewed} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
             <KanbanColumn title="Offered" count={groupedApplicants.offered.length} color="green" applicants={groupedApplicants.offered} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
             <KanbanColumn title="Hired" count={groupedApplicants.hired.length} color="emerald" applicants={groupedApplicants.hired} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
+            <KanbanColumn title="Rejected" count={groupedApplicants.rejected.length} color="red" applicants={groupedApplicants.rejected} onSelect={(app: any) => { setSelectedApplicant(app); setIsDetailOpen(true); }} />
           </div>
         )}
       </div>
@@ -183,6 +190,7 @@ function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
     yellow: "bg-yellow-500",
     green: "bg-green-500",
     emerald: "bg-emerald-500",
+    red: "bg-red-500",
   };
 
   return (
@@ -196,12 +204,31 @@ function KanbanColumn({ title, count, color, applicants, onSelect }: any) {
           <Card key={app.id} className="p-3 cursor-pointer hover:shadow-md transition bg-background" onClick={() => onSelect(app)}>
             <p className="font-semibold text-sm">{app.firstName} {app.lastName}</p>
             <p className="text-xs text-muted-foreground truncate">{app.email}</p>
+            {app.isReapplication && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                <Badge className="text-[10px] font-normal bg-orange-100 text-orange-900 hover:bg-orange-100">
+                  Reapply
+                </Badge>
+                {typeof app.emailApplicationTotal === "number" && app.emailApplicationTotal > 1 && (
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    {app.emailApplicationTotal} apps this email
+                  </Badge>
+                )}
+              </div>
+            )}
+            {!app.isReapplication && typeof app.emailApplicationTotal === "number" && app.emailApplicationTotal > 1 && (
+              <div className="mt-1">
+                <Badge variant="outline" className="text-[10px] font-normal">
+                  1st application · {app.emailApplicationTotal} total with this email
+                </Badge>
+              </div>
+            )}
             <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {app.city}
             </div>
             <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-              {app.resumeUrl ? (
+              {app.resumeUrl || app.hasResumeBlob ? (
                 <Badge variant="secondary" className="text-[10px] font-normal bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
                   <FileText className="h-3 w-3 mr-1" />
                   Resume
@@ -237,7 +264,17 @@ function ApplicantDetailModal({ applicant, open, onOpenChange, onStatusChange }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{applicant.firstName} {applicant.lastName}</DialogTitle>
+          <DialogTitle className="flex flex-wrap items-center gap-2">
+            {applicant.firstName} {applicant.lastName}
+            {applicant.isReapplication && (
+              <Badge className="bg-orange-100 text-orange-900 hover:bg-orange-100">Reapply</Badge>
+            )}
+            {typeof applicant.emailApplicationTotal === "number" && applicant.emailApplicationTotal > 1 && (
+              <Badge variant="outline" className="font-normal">
+                {applicant.emailApplicationTotal} submissions from this email
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-6">
@@ -308,9 +345,12 @@ function ApplicantDetailModal({ applicant, open, onOpenChange, onStatusChange }:
 
         <div className="border-t border-border pt-4">
           <p className="text-xs text-muted-foreground mb-2">Resume</p>
-          {applicant.resumeUrl ? (
+          {applicant.resumeUrl || applicant.hasResumeBlob ? (
             <a
-              href={applicant.resumeUrl}
+              href={
+                applicant.resumeUrl ||
+                `/api/applicants/${applicant.id}/resume`
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
@@ -323,10 +363,7 @@ function ApplicantDetailModal({ applicant, open, onOpenChange, onStatusChange }:
               <p className="font-medium">No resume stored for this applicant.</p>
               <p className="text-xs mt-1 text-amber-800/90">
                 That usually means they skipped the upload step, the file wasn’t a PDF, or resume storage couldn’t upload.
-                On Railway, confirm <code className="text-[11px] bg-amber-100/80 px-1 rounded">BUILT_IN_FORGE_API_URL</code> and{" "}
-                <code className="text-[11px] bg-amber-100/80 px-1 rounded">BUILT_IN_FORGE_API_KEY</code> are set on the{" "}
-                <strong>app</strong> service (same as your working setup). Check deploy logs for “Failed to upload resume”.
-                You can ask the candidate to email their résumé or submit again with a PDF.
+                New applications automatically save the PDF in the database if external storage fails — submit again with a PDF, or check deploy logs for upload errors.
               </p>
             </div>
           )}

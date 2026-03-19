@@ -43,12 +43,18 @@ describe("applicantsRouter", () => {
   describe("submit", () => {
     it("should submit an application without resume", async () => {
       const mockCreateApplicant = vi.spyOn(db, "createApplicant").mockResolvedValue({
-        fieldCount: 0,
-        affectedRows: 1,
-        insertId: 1,
-        info: "",
-        serverStatus: 0,
-        warningStatus: 0,
+        id: 1,
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+        phone: "5551234567",
+        city: "Tampa",
+        experienceLevel: "outside_sales",
+        motivation: "x",
+        status: "new",
+        qualificationScore: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       } as any);
 
       const mockNotifyOwner = vi.spyOn(notification, "notifyOwner").mockResolvedValue(true);
@@ -77,6 +83,8 @@ describe("applicantsRouter", () => {
         motivation: "I want to earn six figures and build my own team",
         resumeUrl: undefined,
         resumeKey: undefined,
+        resumeInlineBase64: undefined,
+        resumeStoredFileName: undefined,
       });
       expect(mockNotifyOwner).toHaveBeenCalled();
       expect(mockSendEmail).toHaveBeenCalledWith(
@@ -88,12 +96,18 @@ describe("applicantsRouter", () => {
 
     it("should submit an application with resume", async () => {
       const mockCreateApplicant = vi.spyOn(db, "createApplicant").mockResolvedValue({
-        fieldCount: 0,
-        affectedRows: 1,
-        insertId: 1,
-        info: "",
-        serverStatus: 0,
-        warningStatus: 0,
+        id: 1,
+        firstName: "John",
+        lastName: "Doe",
+        email: "john@example.com",
+        phone: "5551234567",
+        city: "Tampa",
+        experienceLevel: "outside_sales",
+        motivation: "x",
+        status: "new",
+        qualificationScore: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       } as any);
 
       const mockStoragePut = vi.spyOn(storage, "storagePut").mockResolvedValue({
@@ -148,11 +162,18 @@ describe("applicantsRouter", () => {
       ];
 
       const mockGetApplicants = vi.spyOn(db, "getApplicants").mockResolvedValue(mockApplicants as any);
+      vi.spyOn(db, "getApplicantEmailStatsMap").mockResolvedValue(
+        new Map([["john@example.com", { total: 1, firstId: 1 }]])
+      );
 
       const caller = applicantsRouter.createCaller(createAuthContext());
       const result = await caller.list({});
 
-      expect(result).toEqual(mockApplicants);
+      expect(result[0]).toMatchObject({
+        emailApplicationTotal: 1,
+        isReapplication: false,
+        hasResumeBlob: false,
+      });
       expect(mockGetApplicants).toHaveBeenCalledWith({});
     });
 
@@ -200,6 +221,7 @@ describe("applicantsRouter", () => {
         interviewed: 2,
         offered: 2,
         hired: 1,
+        rejected: 0,
       };
 
       const mockGetStats = vi.spyOn(db, "getApplicantStats").mockResolvedValue(mockStats);
