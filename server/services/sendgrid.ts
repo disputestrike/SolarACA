@@ -1,7 +1,7 @@
 /**
- * SendGrid Email Service
- * Uses the SendGrid v3 REST API directly via fetch (no npm dependency needed).
- * When API key is not configured, emails are logged but not sent.
+ * Transactional email: **Resend** (preferred if `RESEND_API_KEY` is set), else **SendGrid**.
+ * Uses fetch only — no extra npm deps for Resend.
+ * When no provider is configured, emails are logged but not sent.
  */
 
 interface SendGridConfig {
@@ -29,9 +29,63 @@ export function isSendGridConfigured(): boolean {
   return getSendGridConfig() !== null;
 }
 
+/** True if Resend or SendGrid can send mail. */
+export function isEmailProviderConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY?.trim()) || isSendGridConfigured();
+}
+
+function getResendFrom(): string {
+  const fromEmail =
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    process.env.SENDGRID_FROM_EMAIL ||
+    "onboarding@resend.dev";
+  const fromName =
+    process.env.RESEND_FROM_NAME?.trim() ||
+    process.env.SENDGRID_FROM_NAME ||
+    "Florida Solar Sales Academy";
+  return `${fromName} <${fromEmail}>`;
+}
+
+async function sendEmailViaResend(
+  to: string,
+  subject: string,
+  body: string,
+  html: string | undefined,
+  apiKey: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: getResendFrom(),
+        to: [to],
+        subject,
+        text: body,
+        html: html ?? body.replace(/\n/g, "<br>"),
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => "");
+      throw new Error(`Resend ${response.status}: ${errBody || response.statusText}`);
+    }
+
+    console.log(`[Resend] Email sent to ${to}`);
+    return { success: true };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[Resend] Failed to send email:`, message);
+    return { success: false, error: message };
+  }
+}
+
 /**
- * Send an email via SendGrid v3 REST API.
- * If SendGrid is not configured, the email is logged and a success response is returned.
+ * Send an email via Resend (if `RESEND_API_KEY`) or SendGrid (if `SENDGRID_API_KEY`).
+ * If neither is configured, the email is logged and a success response is returned (dev-style noop).
  */
 export async function sendEmail(
   to: string,
@@ -39,10 +93,15 @@ export async function sendEmail(
   body: string,
   html?: string
 ): Promise<{ success: boolean; error?: string }> {
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  if (resendKey) {
+    return sendEmailViaResend(to, subject, body, html, resendKey);
+  }
+
   const config = getSendGridConfig();
 
   if (!config) {
-    console.log(`[SendGrid] Email logged (no API key configured): To: ${to}, Subject: ${subject}`);
+    console.log(`[Email] Logged (no RESEND_API_KEY or SENDGRID_API_KEY): To: ${to}, Subject: ${subject}`);
     return { success: true };
   }
 

@@ -68,18 +68,10 @@ export async function notifyOwner(
 ): Promise<boolean> {
   const { title, content } = validatePayload(payload);
 
-  if (!ENV.forgeApiUrl) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Notification service URL is not configured.",
-    });
-  }
-
-  if (!ENV.forgeApiKey) {
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: "Notification service API key is not configured.",
-    });
+  // Optional Manus/WebDev hook — skip quietly if not configured (Google OAuth / Railway app does not require it).
+  if (!ENV.forgeApiUrl?.trim() || !ENV.forgeApiKey?.trim()) {
+    console.log(`[Notification] Skipped (set BUILT_IN_FORGE_* to enable): ${title}`);
+    return false;
   }
 
   const endpoint = buildEndpointUrl(ENV.forgeApiUrl);

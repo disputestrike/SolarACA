@@ -69,7 +69,7 @@ export const applicantsRouter = router({
         await updateApplicantQualificationScore(applicant.id, qualificationScore);
       }
 
-      // Confirmation email to the candidate (SendGrid — real send when SENDGRID_API_KEY is set)
+      // Confirmation email — Resend (RESEND_API_KEY) preferred, else SendGrid
       try {
         const tpl = messageTemplates.applicationReceived.email;
         await sendEmail(

@@ -50,12 +50,15 @@ Optional (messaging):
 | `TWILIO_ACCOUNT_SID` | From Twilio console |
 | `TWILIO_AUTH_TOKEN` | From Twilio console |
 | `TWILIO_PHONE_NUMBER` | E.164 format e.g. +15551234567 |
-| `SENDGRID_API_KEY` | From SendGrid — **set this** so candidates get an automatic “application received” email after `/apply` |
+| `RESEND_API_KEY` | [Resend](https://resend.com) — **preferred**; candidates get “application received” after `/apply` when this or SendGrid is set |
+| `RESEND_FROM_EMAIL` | Verified domain in Resend (or Resend’s test sender if applicable) |
+| `RESEND_FROM_NAME` | Optional display name |
+| `SENDGRID_API_KEY` | Fallback if `RESEND_API_KEY` is unset |
 | `SENDGRID_FROM_EMAIL` | Verified sender in SendGrid |
 | `SENDGRID_FROM_NAME` | Optional display name |
 | `CALENDLY_API_KEY` | From Calendly integrations page (optional) |
 
-**Resumes:** Stored via Forge when `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY` are set; the dashboard shows **View Resume** when a URL was saved.
+**Resumes (no AWS required):** When `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY` are set (Manus/WebDev storage proxy), uploads work and **View Resume** uses the returned URL. You **do not** need Google/Manus for **login** — that uses **Google OAuth** only.
 
 ---
 

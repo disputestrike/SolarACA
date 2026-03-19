@@ -1,6 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { sendSMS, sendBulkSMS, isTwilioConfigured } from "./twilio";
-import { sendEmail, sendBulkEmail, isSendGridConfigured } from "./sendgrid";
+import {
+  sendEmail,
+  sendBulkEmail,
+  isSendGridConfigured,
+  isEmailProviderConfigured,
+} from "./sendgrid";
 import { getSchedulingUrl, getAvailableSlots, createSchedulingLink, getScheduledEvents } from "./calendly";
 
 // ============================================================
@@ -73,6 +78,7 @@ describe("Twilio SMS Service", () => {
 describe("SendGrid Email Service", () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    vi.stubEnv("RESEND_API_KEY", "");
   });
 
   it("isSendGridConfigured returns false when env vars are missing", () => {
@@ -80,10 +86,32 @@ describe("SendGrid Email Service", () => {
     expect(isSendGridConfigured()).toBe(false);
   });
 
+  it("isEmailProviderConfigured is true when only Resend is set", () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test_key");
+    vi.stubEnv("SENDGRID_API_KEY", "");
+    expect(isEmailProviderConfigured()).toBe(true);
+  });
+
   it("sendEmail returns success when not configured", async () => {
     vi.stubEnv("SENDGRID_API_KEY", "");
+    vi.stubEnv("RESEND_API_KEY", "");
     const result = await sendEmail("test@example.com", "Test Subject", "Test Body");
     expect(result.success).toBe(true);
+  });
+
+  it("sendEmail uses Resend when RESEND_API_KEY is set", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test_key");
+    vi.stubEnv("SENDGRID_API_KEY", "SG_should_not_be_used");
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ id: "mock" }), { status: 200 })
+    );
+    const result = await sendEmail("test@example.com", "Hello", "Body text");
+    expect(result.success).toBe(true);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.resend.com/emails",
+      expect.objectContaining({ method: "POST" })
+    );
+    fetchMock.mockRestore();
   });
 
   it("sendEmail handles empty recipient gracefully", async () => {
