@@ -4,7 +4,7 @@ buildCommand = "pnpm install && pnpm build"
 
 [deploy]
 startCommand = "pnpm start"
-healthcheckPath = "/api/trpc/system.health"
-healthcheckTimeout = 30
+healthcheckPath = "/health"
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

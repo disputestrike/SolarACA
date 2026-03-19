@@ -30,13 +30,21 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   // Auto-create tables on every startup (idempotent - uses IF NOT EXISTS)
-  await runMigrations();
+  // Wrapped so a DB failure never prevents the HTTP server from starting
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error('[Startup] Migration error (non-fatal):', err);
+  }
 
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Simple healthcheck — Railway pings this before marking deploy healthy
+  app.get('/health', (_req, res) => res.json({ ok: true }));
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API
