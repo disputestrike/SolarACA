@@ -117,7 +117,10 @@ export default function Dashboard() {
           </div>
 
           {statsQuery.data && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-7 md:gap-4"
+              aria-label="Applicant counts by status"
+            >
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-xs text-muted-foreground">Total</p>
                 <p className="text-2xl font-bold">{statsQuery.data.total}</p>
@@ -142,9 +145,10 @@ export default function Dashboard() {
                 <p className="text-xs text-emerald-600">Hired</p>
                 <p className="text-2xl font-bold text-emerald-700">{statsQuery.data.hired}</p>
               </div>
-              <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-xs text-red-600">Rejected</p>
-                <p className="text-2xl font-bold text-red-700">{"rejected" in statsQuery.data ? (statsQuery.data as any).rejected : 0}</p>
+              {/* Seventh card: same row as Hired on md+ (after Offer pipeline, terminal outcomes) */}
+              <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                <p className="text-xs text-red-600 font-medium">Rejected</p>
+                <p className="text-2xl font-bold text-red-700">{statsQuery.data.rejected ?? 0}</p>
               </div>
             </div>
           )}
