@@ -82,7 +82,19 @@ Railway will pick these up automatically.
 3. Sign in with the email matching `ADMIN_EMAIL`
 4. You'll land on the dashboard with full admin access
 
-Any other Google account gets `user` role (access to apply page only).
+Any other Google account gets `user` role (access to apply page only) until you invite them.
+
+### Team admins & roles
+
+1. Sign in as the **`ADMIN_EMAIL`** account (always **super admin**).
+2. Open **Team & permissions** (`/dashboard/settings`).
+3. **Invite** a colleague’s **Google email** and pick a **role**:
+   - **Super admin** — full access + can manage invites (same as owner for app features; owner in `ADMIN_EMAIL` cannot be revoked here).
+   - **Manager / Recruiter** — pipeline, resumes, comms, interviews, internal notifications (no team management).
+   - **Viewer** — view pipeline, resumes, and interview info; cannot change status, send messages, or schedule interviews.
+4. They **Sign in with Google** once; OAuth grants dashboard access from the pending invite.
+
+Fine-grained flags are defined in `shared/permissions.ts`. Migration adds `users.adminTier`, `users.adminPermissions`, and table `staffGrants`.
 
 ---
 
@@ -91,4 +103,5 @@ Any other Google account gets `user` role (access to apply page only).
 - `/` — Landing page loads
 - `/apply` — Application funnel works, submits to DB
 - `/dashboard` → Sign in with Google → Kanban board shows
+- `/dashboard/settings` → Team invites (super admins only)
 - `/api/trpc/applicants.stats` → Returns JSON (not an error)

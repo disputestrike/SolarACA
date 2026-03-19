@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { HttpError } from "@shared/_core/errors";
+import { hasAdminPermission } from "@shared/permissions";
 import { sdk } from "./sdk";
 import * as db from "../db";
 
@@ -10,8 +11,16 @@ export function registerApplicantResumeDownload(app: Express) {
   app.get("/api/applicants/:id/resume", async (req: Request, res: Response) => {
     try {
       const user = await sdk.authenticateRequest(req);
-      if (user.role !== "admin") {
-        res.status(403).send("Admin access required");
+      if (
+        user.role !== "admin" ||
+        !hasAdminPermission(
+          user.role,
+          user.adminTier ?? null,
+          user.adminPermissions ?? null,
+          "applicants.view_resume"
+        )
+      ) {
+        res.status(403).send("Resume access denied");
         return;
       }
 

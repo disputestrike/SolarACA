@@ -73,7 +73,35 @@ export function registerOAuthRoutes(app: Express) {
       const openId = `google_${payload.sub}`;
       const name = payload.name || payload.email || "User";
       const email = payload.email || null;
-      const isAdmin = !!(email && ENV.adminEmail && email.toLowerCase() === ENV.adminEmail.toLowerCase());
+      const emailNorm = email?.trim().toLowerCase() ?? null;
+
+      const existing = await db.getUserByOpenId(openId);
+      const envOwner = !!(
+        emailNorm &&
+        ENV.adminEmail &&
+        emailNorm === ENV.adminEmail.trim().toLowerCase()
+      );
+      const grant = emailNorm ? await db.getPendingStaffGrantByEmail(emailNorm) : undefined;
+
+      let role: "user" | "admin" = "user";
+      let adminTier: string | null = null;
+      let adminPermissions: string | null = null;
+      let grantIdToConsume: number | undefined;
+
+      if (envOwner) {
+        role = "admin";
+        adminTier = "super_admin";
+        adminPermissions = null;
+      } else if (grant) {
+        role = "admin";
+        adminTier = grant.adminTier;
+        adminPermissions = grant.permissionsJson ?? null;
+        grantIdToConsume = grant.id;
+      } else if (existing?.role === "admin") {
+        role = "admin";
+        adminTier = existing.adminTier ?? "super_admin";
+        adminPermissions = existing.adminPermissions ?? null;
+      }
 
       await db.upsertUser({
         openId,
@@ -81,8 +109,14 @@ export function registerOAuthRoutes(app: Express) {
         email,
         loginMethod: "google",
         lastSignedIn: new Date(),
-        role: isAdmin ? "admin" : "user",
+        role,
+        adminTier: role === "admin" ? adminTier : null,
+        adminPermissions: role === "admin" ? adminPermissions : null,
       });
+
+      if (grantIdToConsume) {
+        await db.consumeStaffGrantById(grantIdToConsume);
+      }
 
       const sessionToken = await createSessionToken(openId, name);
       const cookieOptions = getSessionCookieOptions(req);

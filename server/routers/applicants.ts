@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { publicProcedure, createPermissionProcedure, router } from "../_core/trpc";
 import {
   createApplicant,
   getApplicants,
@@ -15,6 +15,9 @@ import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { sendEmail } from "../services/sendgrid";
 import { messageTemplates, replaceTemplateVariables } from "./communications";
+
+const applicantsView = createPermissionProcedure("applicants.view");
+const applicantsEditStatus = createPermissionProcedure("applicants.edit_status");
 
 export const applicantsRouter = router({
   // Submit a new application with optional resume
@@ -99,8 +102,8 @@ export const applicantsRouter = router({
       };
     }),
 
-  // Get all applicants with optional filters (admin only)
-  list: protectedProcedure
+  // Get all applicants with optional filters (admin + applicants.view)
+  list: applicantsView
     .input(
       z.object({
         status: z.string().optional(),
@@ -128,16 +131,19 @@ export const applicantsRouter = router({
       });
     }),
 
-  // Get a single applicant by ID (admin only)
-  getById: protectedProcedure
+  // Get a single applicant by ID
+  getById: applicantsView
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const applicant = await getApplicantById(input.id);
-      return applicant;
+      if (!applicant) return null;
+      const { resumeInlineBase64: _blob, ...rest } = applicant;
+      const hasResumeBlob = Boolean(_blob && String(_blob).length > 0);
+      return { ...rest, hasResumeBlob };
     }),
 
-  // Update applicant status (admin only)
-  updateStatus: protectedProcedure
+  // Update applicant status
+  updateStatus: applicantsEditStatus
     .input(
       z.object({
         id: z.number(),
@@ -149,8 +155,8 @@ export const applicantsRouter = router({
       return { success: true };
     }),
 
-  // Get statistics (admin only)
-  stats: protectedProcedure.query(async () => {
+  // Get statistics
+  stats: applicantsView.query(async () => {
     const stats = await getApplicantStats();
     return stats;
   }),

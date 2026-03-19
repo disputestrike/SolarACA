@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Apply from "./pages/Apply";
 import Dashboard from "./pages/Dashboard";
+import TeamSettings from "./pages/TeamSettings";
 import Onboarding from "./pages/Onboarding";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/apply"} component={Apply} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/dashboard/settings"} component={TeamSettings} />
       <Route path={"/onboarding"} component={Onboarding} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

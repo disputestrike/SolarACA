@@ -34,6 +34,10 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  /** When role is admin: super_admin | manager | recruiter | viewer */
+  adminTier: varchar("adminTier", { length: 32 }),
+  /** Optional JSON overrides for fine-grained flags (see shared/permissions.ts) */
+  adminPermissions: text("adminPermissions"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -41,6 +45,20 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+/** Pending or consumed invite for Google OAuth email → admin on first login */
+export const staffGrants = mysqlTable("staffGrants", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  adminTier: varchar("adminTier", { length: 32 }).notNull(),
+  permissionsJson: text("permissionsJson"),
+  createdByOpenId: varchar("createdByOpenId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  consumedAt: timestamp("consumedAt"),
+});
+
+export type StaffGrant = typeof staffGrants.$inferSelect;
+export type InsertStaffGrant = typeof staffGrants.$inferInsert;
 
 // Applicant table for tracking candidates
 export const applicants = mysqlTable("applicants", {

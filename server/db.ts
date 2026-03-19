@@ -1,7 +1,7 @@
-import { eq, desc, and, sql } from "drizzle-orm";
-import { ENV } from './_core/env';
+import { eq, desc, and, sql, isNull } from "drizzle-orm";
+import { ENV } from "./_core/env";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, staffGrants } from "../drizzle/schema";
 import { applicants } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -85,6 +85,97 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+export function normalizeStaffEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export async function getPendingStaffGrantByEmail(emailNorm: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db
+    .select()
+    .from(staffGrants)
+    .where(and(eq(staffGrants.email, emailNorm), isNull(staffGrants.consumedAt)))
+    .limit(1);
+  return rows[0];
+}
+
+export async function listPendingStaffGrants() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(staffGrants)
+    .where(isNull(staffGrants.consumedAt))
+    .orderBy(desc(staffGrants.createdAt));
+}
+
+export async function replacePendingStaffGrant(input: {
+  email: string;
+  adminTier: string;
+  permissionsJson?: string | null;
+  createdByOpenId?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const emailNorm = normalizeStaffEmail(input.email);
+  await db.delete(staffGrants).where(and(eq(staffGrants.email, emailNorm), isNull(staffGrants.consumedAt)));
+  await db.insert(staffGrants).values({
+    email: emailNorm,
+    adminTier: input.adminTier,
+    permissionsJson: input.permissionsJson ?? null,
+    createdByOpenId: input.createdByOpenId ?? null,
+  });
+}
+
+export async function consumeStaffGrantById(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(staffGrants).set({ consumedAt: new Date() }).where(eq(staffGrants.id, id));
+}
+
+export async function deleteStaffGrantById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(staffGrants).where(eq(staffGrants.id, id));
+}
+
+export async function listAdminUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).where(eq(users.role, "admin")).orderBy(desc(users.lastSignedIn));
+}
+
+export async function demoteUserByOpenId(openId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(users)
+    .set({
+      role: "user",
+      adminTier: null,
+      adminPermissions: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.openId, openId));
+}
+
+export async function updateUserAdminProfile(
+  openId: string,
+  data: { adminTier: string; adminPermissions: string | null }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(users)
+    .set({
+      adminTier: data.adminTier,
+      adminPermissions: data.adminPermissions,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(users.openId, openId), eq(users.role, "admin")));
 }
 
 // Applicant queries

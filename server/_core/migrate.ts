@@ -9,10 +9,23 @@ const TABLES = [
     \`email\`        VARCHAR(320),
     \`loginMethod\`  VARCHAR(64),
     \`role\`         ENUM('user','admin') NOT NULL DEFAULT 'user',
+    \`adminTier\`    VARCHAR(32) NULL,
+    \`adminPermissions\` TEXT NULL,
     \`createdAt\`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     \`updatedAt\`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     \`lastSignedIn\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY \`users_openId_unique\` (\`openId\`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+  `CREATE TABLE IF NOT EXISTS \`staffGrants\` (
+    \`id\`               INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    \`email\`            VARCHAR(320) NOT NULL,
+    \`adminTier\`        VARCHAR(32) NOT NULL,
+    \`permissionsJson\`  TEXT NULL,
+    \`createdByOpenId\`  VARCHAR(64) NULL,
+    \`createdAt\`        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    \`consumedAt\`       TIMESTAMP NULL,
+    INDEX \`idx_staffGrants_email_pending\` (\`email\`, \`consumedAt\`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
   `CREATE TABLE IF NOT EXISTS \`applicants\` (
@@ -204,10 +217,23 @@ export async function runMigrations(maxAttempts = 5) {
           await conn.execute(patch);
         } catch (e: any) {
           const msg = String(e?.message || e);
-          if (!msg.includes("1060") && !msg.includes("Duplicate column")) {
+          if (
+            !msg.includes("1060") &&
+            !msg.includes("Duplicate column") &&
+            !msg.includes("1050") &&
+            !msg.includes("already exists")
+          ) {
             console.warn("[Migration] Column patch note:", msg);
           }
         }
+      }
+
+      try {
+        await conn.execute(
+          "UPDATE `users` SET `adminTier` = 'super_admin' WHERE `role` = 'admin' AND (`adminTier` IS NULL OR `adminTier` = '')"
+        );
+      } catch (e: any) {
+        console.warn("[Migration] adminTier backfill note:", String(e?.message || e));
       }
 
       console.log("[Migration] Complete ✓");

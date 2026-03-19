@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { createPermissionProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { interviews, applicants } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -8,9 +8,12 @@ import { sendSMS } from "../services/twilio";
 import { sendEmail } from "../services/sendgrid";
 import { getSchedulingUrl, getAvailableSlots, createSchedulingLink } from "../services/calendly";
 
+const interviewsRead = createPermissionProcedure("interviews.read");
+const interviewsManage = createPermissionProcedure("interviews.manage");
+
 export const interviewsRouter = router({
   // Schedule an interview
-  schedule: protectedProcedure
+  schedule: interviewsManage
     .input(
       z.object({
         applicantId: z.number(),
@@ -82,7 +85,7 @@ export const interviewsRouter = router({
     }),
 
   // Get Calendly scheduling link for a candidate
-  getSchedulingLink: protectedProcedure
+  getSchedulingLink: interviewsRead
     .input(
       z.object({
         applicantId: z.number(),
@@ -121,7 +124,7 @@ export const interviewsRouter = router({
     }),
 
   // Get available Calendly time slots
-  getAvailableSlots: protectedProcedure
+  getAvailableSlots: interviewsRead
     .input(
       z.object({
         startDate: z.string(),
@@ -134,7 +137,7 @@ export const interviewsRouter = router({
     }),
 
   // Get interviews for an applicant
-  getByApplicant: protectedProcedure
+  getByApplicant: interviewsRead
     .input(z.object({ applicantId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -150,7 +153,7 @@ export const interviewsRouter = router({
     }),
 
   // Get all upcoming interviews
-  getUpcoming: protectedProcedure.query(async () => {
+  getUpcoming: interviewsRead.query(async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 
@@ -165,7 +168,7 @@ export const interviewsRouter = router({
   }),
 
   // Update interview status
-  updateStatus: protectedProcedure
+  updateStatus: interviewsManage
     .input(
       z.object({
         interviewId: z.number(),
@@ -212,7 +215,7 @@ export const interviewsRouter = router({
     }),
 
   // Send interview reminder
-  sendReminder: protectedProcedure
+  sendReminder: interviewsManage
     .input(
       z.object({
         interviewId: z.number(),
@@ -280,7 +283,7 @@ export const interviewsRouter = router({
     }),
 
   // Get interview statistics
-  getStats: protectedProcedure.query(async () => {
+  getStats: interviewsRead.query(async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 

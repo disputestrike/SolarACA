@@ -1,10 +1,12 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { serializeMeUser } from "./_core/me";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { applicantsRouter } from "./routers/applicants";
 import { communicationsRouter } from "./routers/communications";
 import { interviewsRouter } from "./routers/interviews";
+import { staffRouter } from "./routers/staff";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -12,8 +14,9 @@ export const appRouter = router({
   applicants: applicantsRouter,
   communications: communicationsRouter,
   interviews: interviewsRouter,
+  staff: staffRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => (opts.ctx.user ? serializeMeUser(opts.ctx.user) : null)),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

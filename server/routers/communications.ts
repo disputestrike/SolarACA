@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { createPermissionProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { communicationLog } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -57,9 +57,12 @@ export function replaceTemplateVariables(
   return result;
 }
 
+const commsSend = createPermissionProcedure("communications.send");
+const applicantsView = createPermissionProcedure("applicants.view");
+
 export const communicationsRouter = router({
   // Send SMS message
-  sendSMS: protectedProcedure
+  sendSMS: commsSend
     .input(
       z.object({
         applicantId: z.number(),
@@ -109,7 +112,7 @@ export const communicationsRouter = router({
     }),
 
   // Send email message
-  sendEmail: protectedProcedure
+  sendEmail: commsSend
     .input(
       z.object({
         applicantId: z.number(),
@@ -163,7 +166,7 @@ export const communicationsRouter = router({
     }),
 
   // Get communication history for an applicant
-  getHistory: protectedProcedure
+  getHistory: applicantsView
     .input(z.object({ applicantId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -178,7 +181,7 @@ export const communicationsRouter = router({
     }),
 
   // Get message templates
-  getTemplates: protectedProcedure.query(() => {
+  getTemplates: commsSend.query(() => {
     return messageTemplates;
   }),
 });

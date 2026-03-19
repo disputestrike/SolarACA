@@ -30,6 +30,8 @@ function createAuthContext(role: "admin" | "user" = "admin"): TrpcContext {
     name: "Test Owner",
     loginMethod: "manus",
     role,
+    adminTier: role === "admin" ? "super_admin" : null,
+    adminPermissions: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
