@@ -1,15 +1,16 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
+import { ENV } from './_core/env';
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import { applicants } from "../drizzle/schema";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && ENV.databaseUrl) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle(ENV.databaseUrl);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -55,9 +56,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
     }
 
     if (!values.lastSignedIn) {
@@ -89,11 +87,7 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
-
 // Applicant queries
-import { applicants } from "../drizzle/schema";
-import { desc } from "drizzle-orm";
 
 export async function createApplicant(data: {
   firstName: string;
@@ -141,17 +135,14 @@ export async function getApplicants(filters?: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  let query: any = db.select().from(applicants);
+  const conditions: any[] = [];
+  if (filters?.status) conditions.push(eq(applicants.status, filters.status as any));
+  if (filters?.city) conditions.push(eq(applicants.city, filters.city));
+  if (filters?.experienceLevel) conditions.push(eq(applicants.experienceLevel, filters.experienceLevel as any));
 
-  if (filters?.status) {
-    query = query.where(eq(applicants.status, filters.status as any));
-  }
-  if (filters?.city) {
-    query = query.where(eq(applicants.city, filters.city));
-  }
-  if (filters?.experienceLevel) {
-    query = query.where(eq(applicants.experienceLevel, filters.experienceLevel as any));
-  }
+  const query = conditions.length > 0
+    ? db.select().from(applicants).where(and(...conditions))
+    : db.select().from(applicants);
 
   return query.orderBy(desc(applicants.createdAt));
 }
