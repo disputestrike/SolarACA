@@ -43,6 +43,28 @@ export const messageTemplates = {
       body: "Hi {name},\n\nWelcome to the Florida Solar Sales Academy family! We're excited to have you on board.\n\nYour training program begins on {date}. Please find the detailed schedule and pre-work materials attached.\n\nGet ready to launch your solar career!\n\nBest regards,\nFlorida Solar Sales Academy Team",
     },
   },
+  /** Sent when a super admin invites dashboard access by email (staff router). */
+  staffInvite: {
+    email: {
+      subject: "You're invited — Florida Solar Sales Academy dashboard ({roleLabel})",
+      body: `Hello,
+
+You've been invited to join the Florida Solar Sales Academy recruiter dashboard as: {roleLabel}
+
+Use this Google account email: {inviteeEmail}
+
+1) Open this link and sign in with Google:
+{signInUrl}
+
+2) After sign-in, open the pipeline:
+{dashboardUrl}
+
+If you weren't expecting this, you can ignore this email.
+
+— {invitedByName}
+Florida Solar Sales Academy`,
+    },
+  },
 };
 
 // Function to replace template variables

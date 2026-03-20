@@ -22,6 +22,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { ADMIN_TIER_LABELS, ADMIN_TIERS, type AdminTier } from "@shared/permissions";
 import { ArrowLeft, Loader2, Shield } from "lucide-react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 
 export default function TeamSettings() {
   const { user, isAuthenticated } = useAuth();
@@ -37,9 +38,16 @@ export default function TeamSettings() {
   });
 
   const inviteMutation = trpc.staff.inviteByEmail.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.staff.listPendingInvites.invalidate();
       setEmail("");
+      if (data.emailSent) {
+        toast.success("Invite saved — we sent them an email with the sign-in link.");
+      } else if (data.emailNote) {
+        toast.warning(data.emailNote, { duration: 12_000 });
+      } else {
+        toast.success("Invite saved.");
+      }
     },
   });
 
@@ -130,8 +138,9 @@ export default function TeamSettings() {
         <Card className="p-6 space-y-4">
           <h2 className="text-lg font-semibold">Invite admin</h2>
           <p className="text-sm text-muted-foreground">
-            Uses the same Google workspace as login. After you invite, they should sign out/in once (or use an
-            incognito window) so OAuth picks up the new role.
+            We email them a sign-in link if <strong>RESEND_API_KEY</strong> or <strong>SENDGRID_API_KEY</strong> is set
+            on the server (Railway variables). They must use the <strong>same Google email</strong> you invited. If
+            email isn’t configured, the invite is still saved — copy the login URL from the warning toast.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
@@ -167,8 +176,13 @@ export default function TeamSettings() {
               {inviteMutation.error?.message || "Invite failed"}
             </p>
           )}
-          {inviteMutation.isSuccess && (
-            <p className="text-sm text-emerald-700">Invite saved. They’ll get access on next Google sign-in.</p>
+          {inviteMutation.isSuccess && inviteMutation.data?.emailSent && (
+            <p className="text-sm text-emerald-700">Last invite: email sent. They get access on next Google sign-in.</p>
+          )}
+          {inviteMutation.isSuccess && !inviteMutation.data?.emailSent && inviteMutation.data?.emailNote && (
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
+              {inviteMutation.data.emailNote}
+            </p>
           )}
         </Card>
 

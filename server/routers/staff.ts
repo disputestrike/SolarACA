@@ -1,9 +1,25 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { ADMIN_PERMISSIONS, ADMIN_TIERS, type AdminPermission, type AdminTier } from "@shared/permissions";
+import {
+  ADMIN_PERMISSIONS,
+  ADMIN_TIER_LABELS,
+  ADMIN_TIERS,
+  type AdminPermission,
+  type AdminTier,
+} from "@shared/permissions";
 import { createPermissionProcedure, router } from "../_core/trpc";
+import type { TrpcContext } from "../_core/context";
 import { ENV } from "../_core/env";
 import * as db from "../db";
+import { sendEmail, isEmailProviderConfigured } from "../services/sendgrid";
+import { messageTemplates, replaceTemplateVariables } from "./communications";
+
+function getPublicOrigin(req: TrpcContext["req"]): string {
+  const xf = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0]?.trim();
+  const proto = xf || (req as { protocol?: string }).protocol || "https";
+  const host = req.headers.host || "localhost:3000";
+  return `${proto}://${host}`;
+}
 
 const tierSchema = z.enum(ADMIN_TIERS as unknown as [AdminTier, ...AdminTier[]]);
 
@@ -65,7 +81,46 @@ export const staffRouter = router({
         permissionsJson: json,
         createdByOpenId: ctx.user!.openId,
       });
-      return { success: true as const };
+
+      const origin = getPublicOrigin(ctx.req);
+      const signInUrl = `${origin}/api/oauth/login`;
+      const dashboardUrl = `${origin}/dashboard`;
+      const roleLabel = ADMIN_TIER_LABELS[input.adminTier];
+      const invitedByName = ctx.user?.name?.trim() || ctx.user?.email || "An administrator";
+      const vars = {
+        roleLabel,
+        inviteeEmail: input.email.trim(),
+        signInUrl,
+        dashboardUrl,
+        invitedByName,
+      };
+      const tpl = messageTemplates.staffInvite.email;
+      const subject = replaceTemplateVariables(tpl.subject, vars);
+      const body = replaceTemplateVariables(tpl.body, vars);
+
+      let emailSent = false;
+      let emailNote: string | undefined;
+
+      if (!isEmailProviderConfigured()) {
+        emailNote =
+          "Invite saved, but no email provider is configured. Set RESEND_API_KEY (or SENDGRID_API_KEY) on the server, or send them the sign-in link yourself.";
+        console.warn("[Staff] Invite email skipped:", emailNote);
+      } else {
+        try {
+          const result = await sendEmail(input.email.trim(), subject, body);
+          emailSent = result.success;
+          if (!result.success && result.error) {
+            emailNote = `Invite saved, but the email failed to send: ${result.error}`;
+            console.error("[Staff] Invite email failed:", result.error);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          emailNote = `Invite saved, but the email failed: ${msg}`;
+          console.error("[Staff] Invite email error:", err);
+        }
+      }
+
+      return { success: true as const, emailSent, emailNote };
     }),
 
   cancelInvite: createPermissionProcedure("admins.manage")
