@@ -23,7 +23,6 @@ import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 import {
   ArrowRight,
-  Zap,
   Leaf,
   TrendingUp,
   Users,
@@ -52,6 +51,13 @@ const NAV_SECTIONS = [
   { id: "talent-community", label: "Stay in the Loop" },
   { id: "faq", label: "FAQ" },
 ] as const;
+
+/** Button uses `whitespace-nowrap` by default — long marketing CTAs must wrap on narrow viewports. */
+const mobileCtaButtonClass =
+  "w-full max-w-full min-w-0 !whitespace-normal box-border text-balance text-center text-sm leading-snug sm:text-base md:text-lg px-3 sm:px-8 py-5 sm:py-6 h-auto min-h-[48px] touch-manipulation justify-center gap-2";
+
+const heroCtaButtonClass =
+  "w-full min-w-0 max-w-full !whitespace-normal sm:w-auto sm:max-w-none box-border text-center text-sm sm:text-base px-4 sm:px-8 py-5 sm:py-6 h-auto min-h-[48px] touch-manipulation justify-center gap-2 flex-wrap";
 
 const IMAGES = {
   hero: "https://d2xsxph8kpxj0f.cloudfront.net/310519663280407830/TovehVTntbKREJsUiV75rg/hero-bg_a27e8353.jpg",
@@ -244,7 +250,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-[max(0px,env(safe-area-inset-bottom))]">
+    <div className="min-h-screen overflow-x-clip bg-background text-foreground pb-[max(0px,env(safe-area-inset-bottom))]">
 
       {/* Navigation */}
       <nav className="sticky top-0 z-40 border-b border-border bg-background/95 pt-[max(0px,env(safe-area-inset-top))] backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -335,18 +341,18 @@ export default function Home() {
             <p className="text-base leading-relaxed text-gray-200 sm:text-xl">
               Earn $100k-$300k+ your first year. Lead your own team. Help homeowners achieve energy independence while building real wealth in the fastest-growing industry in America.
             </p>
-            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:gap-4 sm:pt-4">
+            <div className="flex min-w-0 flex-col gap-3 pt-2 sm:flex-row sm:gap-4 sm:pt-4">
               <Button
                 size="lg"
                 onClick={() => navigate("/apply")}
-                className="min-h-[48px] touch-manipulation bg-primary px-8 py-6 text-base text-primary-foreground hover:bg-primary/90 sm:text-lg"
+                className={`bg-primary text-primary-foreground hover:bg-primary/90 ${heroCtaButtonClass}`}
               >
-                Start Your Journey <ArrowRight className="ml-2 h-5 w-5" />
+                Start Your Journey <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="min-h-[48px] touch-manipulation border-white px-8 py-6 text-base text-white hover:bg-white/10 sm:text-lg"
+                className={`border-white text-white hover:bg-white/10 ${heroCtaButtonClass}`}
                 onClick={() => document.getElementById("problem")?.scrollIntoView({ behavior: "smooth" })}
               >
                 See How It Works
@@ -394,33 +400,43 @@ export default function Home() {
               Whether you want to own a territory in the field or grow into leadership, we train you for a solar career with real upside.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            <Card className="p-8 border-border hover:border-primary/50 transition-all flex flex-col h-full">
+          <div className="mb-16 grid min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
+            <Card className="flex h-full min-w-0 flex-col border-border p-6 transition-all hover:border-primary/50 sm:p-8">
               <h3 className="text-2xl font-bold text-primary mb-2">Sales Rep</h3>
               <p className="text-muted-foreground mb-6 flex-1 leading-relaxed">
                 Master our system, work your market, and build performance-based income with a mentor in your corner from day one.
               </p>
-              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/apply?track=rep")}>
-                Apply as Sales Rep <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                className="h-auto min-h-[48px] w-full max-w-full !whitespace-normal bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90 sm:text-base"
+                onClick={() => navigate("/apply?track=rep")}
+              >
+                Apply as Sales Rep <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </Button>
             </Card>
-            <Card className="p-8 border-border hover:border-primary/50 transition-all flex flex-col h-full">
+            <Card className="flex h-full min-w-0 flex-col border-border p-6 transition-all hover:border-primary/50 sm:p-8">
               <h3 className="text-2xl font-bold text-primary mb-2">Sales Leader</h3>
               <p className="text-muted-foreground mb-6 flex-1 leading-relaxed">
                 Build, coach, and scale a team — with leadership paths and overrides that reward how you grow others.
               </p>
-              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/apply?track=leader")}>
-                Apply as Sales Leader <ArrowRight className="ml-2 h-4 w-4" />
+              <Button
+                className="h-auto min-h-[48px] w-full max-w-full !whitespace-normal bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90 sm:text-base"
+                onClick={() => navigate("/apply?track=leader")}
+              >
+                Apply as Sales Leader <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </Button>
             </Card>
           </div>
-          <div className="max-w-3xl mx-auto text-center bg-muted/50 border border-border rounded-2xl p-10">
+          <div className="mx-auto min-w-0 max-w-3xl overflow-hidden rounded-2xl border border-border bg-muted/50 px-4 py-8 text-center sm:p-10">
             <h3 className="text-2xl font-bold mb-4">We&apos;re Selective</h3>
             <p className="text-muted-foreground mb-8 leading-relaxed">
               We don&apos;t hire everyone. We look for drive, coachability, and integrity — people who want to build a career, not just punch a clock.
             </p>
-            <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
-              Think You Have What It Takes? Apply Now <ArrowRight className="ml-2 h-5 w-5" />
+            <Button
+              size="lg"
+              onClick={() => navigate("/apply")}
+              className={`bg-primary text-primary-foreground hover:bg-primary/90 ${mobileCtaButtonClass}`}
+            >
+              Think You Have What It Takes? Apply Now <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
             </Button>
           </div>
         </div>
@@ -484,19 +500,23 @@ export default function Home() {
 
       {/* NEW: Is This In Your Head? */}
       <section className="py-16 px-4 bg-background">
-        <div className="container mx-auto max-w-3xl text-center">
-          <div className="bg-muted/50 border border-border rounded-2xl p-10">
-            <div className="text-2xl md:text-3xl font-bold italic leading-relaxed text-foreground mb-6 space-y-3">
+        <div className="container mx-auto max-w-3xl min-w-0 px-0 text-center">
+          <div className="overflow-hidden rounded-2xl border border-border bg-muted/50 px-4 py-8 sm:p-10">
+            <div className="mb-6 space-y-3 text-xl font-bold italic leading-relaxed text-foreground sm:text-2xl md:text-3xl">
               <p className="m-0">&ldquo;I want to make real money — but I don&apos;t know where to start.</p>
               <p className="m-0">I&apos;m tired of jobs with a ceiling on my income and no real future.</p>
               <p className="m-0">I want something where my effort actually determines what I earn…</p>
               <p className="m-0">and where I can build something real.&rdquo;</p>
             </div>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="mb-8 text-lg text-muted-foreground">
               If that&apos;s been on your mind — you&apos;re exactly where you need to be.
             </p>
-            <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
-              Apply Now — Takes 5 Minutes <ArrowRight className="ml-2 h-5 w-5" />
+            <Button
+              size="lg"
+              onClick={() => navigate("/apply")}
+              className={`bg-primary text-primary-foreground hover:bg-primary/90 ${mobileCtaButtonClass}`}
+            >
+              Apply Now — Takes 5 Minutes <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
             </Button>
           </div>
         </div>
@@ -514,10 +534,13 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { icon: <Brain className="h-8 w-8 text-primary" />, title: "2-Week Onboarding & Training", desc: "Solar technology, our proven sales system, objection handling, and field ride-alongs. You'll be ready to close before you finish." },
-              { icon: <Users className="h-8 w-8 text-primary" />, title: "Personal Mentor (90 Days)", desc: "Every new hire is paired with a senior rep. You're never alone in the field. Ask anything, anytime." },
+              {
+                icon: <Users className="h-8 w-8 text-primary" />,
+                title: "Mentorship & Weekly Coaching",
+                desc: "A personal mentor for your first 90 days — paired with a senior rep so you're never alone in the field. Plus live weekly group coaching on objection handling, deal reviews, and market updates to keep you sharp.",
+              },
               { icon: <TrendingUp className="h-8 w-8 text-primary" />, title: "Clear Leadership Path", desc: "Rep → Senior Rep → Team Lead → Regional Manager. We promote from within. Your ceiling is how high you want to go." },
               { icon: <Shield className="h-8 w-8 text-primary" />, title: "Proven Sales System", desc: "A tested, repeatable process for finding prospects, presenting solar, handling objections, and closing deals — no guessing." },
-              { icon: <Zap className="h-8 w-8 text-primary" />, title: "Live Weekly Coaching", desc: "Group coaching sessions every week covering objection handling, deal reviews, and market updates to keep you sharp." },
               { icon: <CalendarDays className="h-8 w-8 text-primary" />, title: "Weekly Commission Pay", desc: "Commission runs weekly on a Friday pay schedule — so you get paid often and can count on regular cash flow from your deals." },
               { icon: <Leaf className="h-8 w-8 text-primary" />, title: "Work You Believe In", desc: "Help homeowners slash their energy bills and go green. Every sale makes a real difference — and you'll know it." },
             ].map((item, i) => (
@@ -608,9 +631,13 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          <div className="text-center mt-10">
-            <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-10 py-6">
-              I'm Ready — Apply Now <ArrowRight className="ml-2 h-5 w-5" />
+          <div className="mx-auto mt-10 max-w-xl px-2 text-center">
+            <Button
+              size="lg"
+              onClick={() => navigate("/apply")}
+              className={`bg-primary text-primary-foreground hover:bg-primary/90 ${mobileCtaButtonClass}`}
+            >
+              I&apos;m Ready — Apply Now <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
             </Button>
           </div>
         </div>
@@ -662,7 +689,11 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Button onClick={() => navigate("/apply")} variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
+                <Button
+                  onClick={() => navigate("/apply")}
+                  variant="outline"
+                  className="h-auto min-h-[44px] w-full max-w-full !whitespace-normal border-primary px-3 py-3 text-center text-sm text-primary hover:bg-primary/10 sm:text-base"
+                >
                   Apply in {group.stateName}
                 </Button>
               </Card>
@@ -737,7 +768,7 @@ export default function Home() {
 
       {/* NEW: FAQ */}
       <section id="faq" className="py-20 px-4 bg-background">
-        <div className="container mx-auto max-w-3xl">
+        <div className="container mx-auto max-w-3xl min-w-0 px-2 sm:px-4">
           <div className="text-center mb-14">
             <h2 className="text-4xl font-bold mb-4">Frequently Asked <span className="text-primary">Questions</span></h2>
             <p className="text-lg text-muted-foreground">Everything you need to know before you apply.</p>
@@ -745,10 +776,14 @@ export default function Home() {
           <div className="space-y-3">
             {faqs.map((faq, i) => <FAQItem key={i} q={faq.q} a={faq.a} />)}
           </div>
-          <div className="text-center mt-12">
+          <div className="mx-auto mt-12 max-w-xl px-1 text-center">
             <p className="text-muted-foreground mb-4">Still have questions? We are happy to talk.</p>
-            <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
-              Apply Now & We'll Answer Everything <ArrowRight className="ml-2 h-5 w-5" />
+            <Button
+              size="lg"
+              onClick={() => navigate("/apply")}
+              className={`bg-primary text-primary-foreground hover:bg-primary/90 ${mobileCtaButtonClass}`}
+            >
+              Apply Now & We&apos;ll Answer Everything <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
             </Button>
           </div>
         </div>
@@ -790,8 +825,12 @@ export default function Home() {
           <p className="text-lg text-white/90 leading-relaxed">
             Join hundreds of solar professionals earning six figures, building their teams, and making a real impact on America&apos;s clean energy future. No experience required. Just bring the drive.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button size="lg" onClick={() => navigate("/apply")} className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 font-bold">
+          <div className="flex min-w-0 flex-col justify-center gap-4 px-2 pt-4 sm:flex-row">
+            <Button
+              size="lg"
+              onClick={() => navigate("/apply")}
+              className={`bg-white font-bold text-primary hover:bg-white/90 ${mobileCtaButtonClass}`}
+            >
               Apply Now — It Takes 5 Minutes
             </Button>
           </div>
