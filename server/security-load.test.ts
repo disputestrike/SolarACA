@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MARKET_TERRITORIES } from "@shared/markets";
+import { UNAUTHED_ERR_MSG, NOT_PERMISSION_ERR_MSG } from "@shared/const";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -179,10 +180,24 @@ describe("SECURITY - XSS Attack Vectors", () => {
 // SECURITY: CSRF & Auth Bypass Tests
 // ============================================================
 describe("SECURITY - Auth & Access Control", () => {
-  it("unauthenticated user can access public endpoints", async () => {
-    const caller = appRouter.createCaller(createAuthContext());
-    const stats = await caller.applicants.stats();
-    expect(stats).toBeDefined();
+  it("unauthenticated user cannot access applicants.stats", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(caller.applicants.stats()).rejects.toThrow(UNAUTHED_ERR_MSG);
+  });
+
+  it("unauthenticated user cannot access applicants.list", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(caller.applicants.list({})).rejects.toThrow(UNAUTHED_ERR_MSG);
+  });
+
+  it("unauthenticated user cannot access applicants.getById", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(caller.applicants.getById({ id: 1 })).rejects.toThrow(UNAUTHED_ERR_MSG);
+  });
+
+  it("non-admin user cannot access applicants.stats", async () => {
+    const caller = appRouter.createCaller(createAuthContext("user"));
+    await expect(caller.applicants.stats()).rejects.toThrow(NOT_PERMISSION_ERR_MSG);
   });
 
   it("unauthenticated user can submit application (public endpoint)", async () => {

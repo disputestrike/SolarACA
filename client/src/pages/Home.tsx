@@ -3,6 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -33,9 +40,18 @@ import {
   ChevronUp,
   Loader2,
   CalendarDays,
+  Menu,
 } from "lucide-react";
 import { useState } from "react";
 import { BRAND_NAME, MARKET_TERRITORIES, MARKET_TERRITORY_COUNT, marketsGroupedByState, type WaitlistCity } from "@shared/markets";
+
+const NAV_SECTIONS = [
+  { id: "problem", label: "Why Solar" },
+  { id: "what-you-get", label: "What You Get" },
+  { id: "locations", label: "Locations" },
+  { id: "talent-community", label: "Stay in the Loop" },
+  { id: "faq", label: "FAQ" },
+] as const;
 
 const IMAGES = {
   hero: "https://d2xsxph8kpxj0f.cloudfront.net/310519663280407830/TovehVTntbKREJsUiV75rg/hero-bg_a27e8353.jpg",
@@ -202,8 +218,9 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex justify-between items-center p-6 text-left hover:bg-muted/30 transition"
+        className="flex min-h-[48px] w-full touch-manipulation items-center justify-between p-4 text-left transition hover:bg-muted/30 sm:p-6"
       >
         <span className="font-semibold text-base pr-4">{q}</span>
         {open ? <ChevronUp className="h-5 w-5 text-primary flex-shrink-0" /> : <ChevronDown className="h-5 w-5 text-primary flex-shrink-0" />}
@@ -219,60 +236,119 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 export default function Home() {
   const [, navigate] = useLocation();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const scrollToSection = (id: string) => {
+    setMobileNavOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-[max(0px,env(safe-area-inset-bottom))]">
 
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-2 hover:opacity-90 transition">
-            <Sun className="h-7 w-7" />
-            {BRAND_NAME}
+      <nav className="sticky top-0 z-40 border-b border-border bg-background/95 pt-[max(0px,env(safe-area-inset-top))] backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="container mx-auto flex items-center justify-between gap-2 px-4 py-3 sm:py-4">
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-2 text-lg font-bold text-primary transition hover:opacity-90 sm:text-2xl"
+          >
+            <Sun className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
+            <span className="truncate">{BRAND_NAME}</span>
           </Link>
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#problem" className="text-sm text-muted-foreground hover:text-primary transition">Why Solar</a>
-            <a href="#what-you-get" className="text-sm text-muted-foreground hover:text-primary transition">What You Get</a>
-            <a href="#locations" className="text-sm text-muted-foreground hover:text-primary transition">Locations</a>
-            <a href="#talent-community" className="text-sm text-muted-foreground hover:text-primary transition">Stay in the Loop</a>
-            <a href="#faq" className="text-sm text-muted-foreground hover:text-primary transition">FAQ</a>
+          <div className="hidden items-center gap-6 md:flex">
+            {NAV_SECTIONS.map(({ id, label }) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                className="text-sm text-muted-foreground transition hover:text-primary"
+              >
+                {label}
+              </a>
+            ))}
           </div>
-          <Button onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90">
-            Apply Now
-          </Button>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-11 w-11 touch-manipulation md:hidden"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-6 w-6" aria-hidden />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="w-[min(100vw-2rem,20rem)] gap-0 border-border p-0 pt-[max(0.5rem,env(safe-area-inset-top))] sm:max-w-sm"
+              >
+                <SheetHeader className="border-b border-border px-4 py-4 text-left">
+                  <SheetTitle className="text-base">Sections</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col p-2" aria-label="Page sections">
+                  {NAV_SECTIONS.map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className="min-h-[48px] w-full touch-manipulation rounded-md px-4 py-3 text-left text-base font-medium text-foreground transition hover:bg-muted"
+                      onClick={() => scrollToSection(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <Button
+              onClick={() => navigate("/apply")}
+              className="h-11 min-h-[44px] touch-manipulation bg-primary px-3 text-sm text-primary-foreground hover:bg-primary/90 sm:px-6 sm:text-base"
+            >
+              Apply Now
+            </Button>
+          </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-[620px] flex items-center">
+      <section className="relative flex min-h-[min(100svh,720px)] items-center sm:min-h-[620px]">
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${IMAGES.hero})` }} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/40" />
-        <div className="relative z-10 container mx-auto px-4 py-24">
-          <div className="max-w-2xl space-y-6">
+        <div className="relative z-10 container mx-auto px-4 py-16 sm:py-24">
+          <div className="max-w-2xl space-y-5 sm:space-y-6">
             {/* NEW: No experience badge */}
-            <div className="flex flex-wrap gap-3">
-              <div className="inline-block bg-primary/90 text-primary-foreground px-4 py-1.5 rounded-full text-sm font-semibold">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <div className="inline-block rounded-full bg-primary/90 px-3 py-1.5 text-xs font-semibold text-primary-foreground sm:px-4 sm:text-sm">
                 Now Hiring Across the U.S.
               </div>
-              <div className="inline-block bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold border border-white/30">
+              <div className="inline-block rounded-full border border-white/30 bg-white/20 px-3 py-1.5 text-xs font-semibold text-white sm:px-4 sm:text-sm">
                 ✓ No Solar Experience Required
               </div>
-              <div className="inline-block bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold border border-white/30">
+              <div className="inline-block rounded-full border border-white/30 bg-white/20 px-3 py-1.5 text-xs font-semibold text-white sm:px-4 sm:text-sm">
                 <span className="opacity-95">Weekly commission · Paid every Friday</span>
               </div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl">
               Build Your Future in <span className="text-primary">Solar Energy</span>
             </h1>
-            <p className="text-xl text-gray-200 leading-relaxed">
+            <p className="text-base leading-relaxed text-gray-200 sm:text-xl">
               Earn $100k-$300k+ your first year. Lead your own team. Help homeowners achieve energy independence while building real wealth in the fastest-growing industry in America.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:gap-4 sm:pt-4">
+              <Button
+                size="lg"
+                onClick={() => navigate("/apply")}
+                className="min-h-[48px] touch-manipulation bg-primary px-8 py-6 text-base text-primary-foreground hover:bg-primary/90 sm:text-lg"
+              >
                 Start Your Journey <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 text-lg px-8 py-6"
-                onClick={() => document.getElementById("problem")?.scrollIntoView({ behavior: "smooth" })}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="min-h-[48px] touch-manipulation border-white px-8 py-6 text-base text-white hover:bg-white/10 sm:text-lg"
+                onClick={() => document.getElementById("problem")?.scrollIntoView({ behavior: "smooth" })}
+              >
                 See How It Works
               </Button>
             </div>

@@ -298,6 +298,23 @@ describe("EDGE CASES - Input validation and boundaries", () => {
     ).rejects.toThrow();
   });
 
+  it("applicants.submit rejects motivation over maximum length (spam / abuse)", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    const huge = `${"I want financial freedom ".repeat(2500)}end`;
+    expect(huge.length).toBeGreaterThan(50_000);
+    await expect(
+      caller.applicants.submit({
+        firstName: "John",
+        lastName: "Doe",
+        email: `motmax-${Date.now()}@test.com`,
+        phone: "1234567890",
+        city: "FL - Tampa",
+        experienceLevel: "entry_level",
+        motivation: huge,
+      })
+    ).rejects.toThrow();
+  });
+
   it("applicants.getById rejects non-numeric id", async () => {
     const caller = appRouter.createCaller(createAuthContext());
     await expect(
@@ -377,21 +394,20 @@ describe("EDGE CASES - Input validation and boundaries", () => {
 // 4. CHAOS TESTS - SQL Injection, XSS, Overflow
 // ============================================================
 describe("CHAOS TESTS - SQL Injection, XSS, and Overflow", () => {
-  it("rejects SQL injection in firstName", async () => {
-    const caller = appRouter.createCaller(createAuthContext());
+  it("stores SQL injection patterns in firstName safely (parameterized DB)", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
     // Drizzle ORM uses parameterized queries, so this should be safe
-    // but the input should still be validated
     await expect(
       caller.applicants.submit({
         firstName: "'; DROP TABLE applicants; --",
         lastName: "Doe",
-        email: "sql@test.com",
+        email: `sql-${Date.now()}@test.com`,
         phone: "1234567890",
         city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow in solar",
       })
-    ).resolves.toBeDefined(); // Should succeed but not execute SQL injection
+    ).resolves.toMatchObject({ success: true });
   });
 
   it("handles XSS in motivation field", async () => {

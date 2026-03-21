@@ -14,9 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowRight, Upload, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Upload, CheckCircle, Loader2 } from "lucide-react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { BRAND_NAME, MARKET_TERRITORIES, marketsGroupedByState, type MarketTerritory } from "@shared/markets";
+import { cn } from "@/lib/utils";
 
 type Step = "info" | "experience" | "motivation" | "resume" | "success";
 
@@ -27,7 +29,16 @@ const MAX_RESUME_BYTES = 8 * 1024 * 1024;
 export default function Apply() {
   const [step, setStep] = useState<Step>("info");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    city: MarketTerritory;
+    experienceLevel: string;
+    motivation: string;
+    resume: File | null;
+  }>({
     firstName: "",
     lastName: "",
     email: "",
@@ -35,7 +46,7 @@ export default function Apply() {
     city: MARKET_TERRITORIES[0],
     experienceLevel: "",
     motivation: "",
-    resume: null as File | null,
+    resume: null,
   });
 
   useEffect(() => {
@@ -59,7 +70,7 @@ export default function Apply() {
   };
 
   const handleCityChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, city: value }));
+    setFormData((prev) => ({ ...prev, city: value as MarketTerritory }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,15 +183,39 @@ export default function Apply() {
   };
 
   const progressPercentage = ((["info", "experience", "motivation", "resume"].indexOf(step) + 1) / 4) * 100;
+  const formSteps = ["info", "experience", "motivation", "resume"] as const;
+  const currentStepIndex = formSteps.indexOf(step as (typeof formSteps)[number]);
+  const stepLabel =
+    step !== "success" && currentStepIndex >= 0 ? `Step ${currentStepIndex + 1} of 4` : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 py-12 px-4">
-      <div className="container mx-auto max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      {/* Sticky top bar — home + step context (mobile-friendly) */}
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+        <div className="relative mx-auto flex h-14 max-w-2xl items-center px-3 sm:px-4">
+          <Button variant="ghost" size="sm" className="touch-manipulation relative z-10 -ml-2 h-11 shrink-0 px-2 sm:px-3" asChild>
+            <Link href="/" className="flex items-center gap-1.5 text-foreground">
+              <ArrowLeft className="h-5 w-5 shrink-0" aria-hidden />
+              <span className="hidden min-[380px]:inline">Back to home</span>
+              <span className="min-[380px]:hidden">Home</span>
+            </Link>
+          </Button>
+          {stepLabel && (
+            <span className="pointer-events-none absolute left-1/2 top-1/2 max-w-[55%] -translate-x-1/2 -translate-y-1/2 truncate text-center text-xs font-medium text-muted-foreground sm:max-w-none sm:text-sm">
+              {stepLabel}
+            </span>
+          )}
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-2xl px-3 py-6 sm:px-4 sm:py-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Join {BRAND_NAME}</h1>
-          <p className="text-muted-foreground">Start your journey to financial freedom and leadership</p>
-          <p className="text-sm text-primary font-medium mt-2">Commission paid weekly — every Friday.</p>
+        <div className="mb-6 text-center sm:mb-8">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">Join {BRAND_NAME}</h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Start your journey to financial freedom and leadership
+          </p>
+          <p className="mt-2 text-xs font-medium text-primary sm:text-sm">Commission paid weekly — every Friday.</p>
         </div>
 
         {/* Progress Bar */}
@@ -200,16 +235,18 @@ export default function Apply() {
         )}
 
         {/* Form Card */}
-        <Card className="p-8 border-border">
+        <Card className="border-border p-4 shadow-sm sm:p-8">
           {/* Step 1: Basic Info */}
           {step === "info" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Let's Start with Your Information</h2>
-                <p className="text-muted-foreground mb-6">We'll use this to contact you about your application</p>
+                <h2 className="text-xl font-bold sm:text-2xl mb-3 sm:mb-4">Let&apos;s Start with Your Information</h2>
+                <p className="mb-6 text-sm text-muted-foreground sm:text-base">
+                  We&apos;ll use this to contact you about your application
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
@@ -218,6 +255,8 @@ export default function Apply() {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     placeholder="John"
+                    className="h-11 min-h-[44px] text-base sm:h-10"
+                    autoComplete="given-name"
                   />
                 </div>
                 <div>
@@ -228,6 +267,8 @@ export default function Apply() {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     placeholder="Doe"
+                    className="h-11 min-h-[44px] text-base sm:h-10"
+                    autoComplete="family-name"
                   />
                 </div>
               </div>
@@ -238,9 +279,12 @@ export default function Apply() {
                   id="email"
                   name="email"
                   type="email"
+                  inputMode="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="john@example.com"
+                  className="h-11 min-h-[44px] text-base sm:h-10"
+                  autoComplete="email"
                 />
               </div>
 
@@ -250,16 +294,19 @@ export default function Apply() {
                   id="phone"
                   name="phone"
                   type="tel"
+                  inputMode="tel"
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="(555) 123-4567"
+                  className="h-11 min-h-[44px] text-base sm:h-10"
+                  autoComplete="tel"
                 />
               </div>
 
               <div>
                 <Label htmlFor="city">Which market are you applying for?</Label>
                 <Select value={formData.city} onValueChange={handleCityChange}>
-                  <SelectTrigger id="city" className="max-w-full">
+                  <SelectTrigger id="city" className="h-11 min-h-[44px] max-w-full text-base sm:h-10">
                     <SelectValue placeholder="Select state — city" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[min(24rem,70vh)]">
@@ -283,12 +330,14 @@ export default function Apply() {
           {step === "experience" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Your Experience</h2>
-                <p className="text-muted-foreground mb-6">We train everyone, but we want to understand where you're starting from</p>
+                <h2 className="text-xl font-bold sm:text-2xl mb-3 sm:mb-4">Your Experience</h2>
+                <p className="mb-6 text-sm text-muted-foreground sm:text-base">
+                  We train everyone, but we want to understand where you&apos;re starting from
+                </p>
               </div>
 
               <Select value={formData.experienceLevel} onValueChange={handleSelectChange}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 min-h-[44px] w-full text-base sm:h-10">
                   <SelectValue placeholder="Select your experience level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -311,8 +360,10 @@ export default function Apply() {
           {step === "motivation" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Why Solar?</h2>
-                <p className="text-muted-foreground mb-6">Tell us what excites you about this opportunity</p>
+                <h2 className="text-xl font-bold sm:text-2xl mb-3 sm:mb-4">Why Solar?</h2>
+                <p className="mb-6 text-sm text-muted-foreground sm:text-base">
+                  Tell us what excites you about this opportunity
+                </p>
               </div>
 
               <div>
@@ -324,6 +375,7 @@ export default function Apply() {
                   onChange={handleInputChange}
                   placeholder="I'm excited about earning six figures, building my own team, and making an impact on America's clean energy future..."
                   rows={6}
+                  className="min-h-[160px] text-base leading-relaxed"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
                   {formData.motivation.length} / 20 characters minimum
@@ -347,13 +399,25 @@ export default function Apply() {
           {step === "resume" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-4">Your Resume (Optional)</h2>
-                <p className="text-muted-foreground mb-6">Upload your resume so we can learn more about your background</p>
+                <h2 className="text-xl font-bold sm:text-2xl mb-3 sm:mb-4">Your Resume (Optional)</h2>
+                <p className="mb-6 text-sm text-muted-foreground sm:text-base">
+                  Upload your resume so we can learn more about your background
+                </p>
               </div>
 
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary transition"
-                onClick={() => document.getElementById("resume-input")?.click()}>
-                <Upload className="mx-auto mb-2 text-muted-foreground" size={32} />
+              <div
+                className="cursor-pointer rounded-lg border-2 border-dashed border-border p-6 text-center transition hover:border-primary active:bg-muted/30 sm:p-8"
+                onClick={() => document.getElementById("resume-input")?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById("resume-input")?.click();
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <Upload className="mx-auto mb-2 text-muted-foreground" size={32} aria-hidden />
                 <p className="font-semibold mb-1">
                   {formData.resume ? formData.resume.name : "Click to upload or drag and drop"}
                 </p>
@@ -425,49 +489,62 @@ export default function Apply() {
 
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/"}
-                className="w-full"
+                onClick={() => (window.location.href = "/")}
+                className="h-12 w-full touch-manipulation text-base"
               >
                 Return to Home
               </Button>
             </div>
           )}
 
-          {/* Navigation Buttons */}
+          {/* Navigation: previous step + next/submit (touch-friendly) */}
           {step !== "success" && (
-            <div className="flex gap-4 mt-8">
+            <div
+              className={cn(
+                "mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+                step === "info" && "sm:justify-end"
+              )}
+            >
               {step !== "info" && (
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={handlePrev}
                   disabled={isSubmitting}
+                  className="h-11 min-h-[44px] w-full touch-manipulation text-base sm:w-auto sm:min-w-[7.5rem]"
                 >
-                  Back
+                  <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                  Previous step
                 </Button>
               )}
               {step !== "resume" && (
                 <Button
+                  type="button"
                   onClick={handleNext}
                   disabled={isSubmitting}
-                  className="ml-auto"
+                  className={cn(
+                    "h-11 min-h-[44px] w-full touch-manipulation text-base sm:ml-auto sm:w-auto sm:min-w-[10rem]",
+                    step === "info" && "w-full"
+                  )}
                 >
-                  Next <ArrowRight className="ml-2" size={16} />
+                  Next <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Button>
               )}
               {step === "resume" && (
                 <Button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="ml-auto"
+                  className="h-11 min-h-[44px] w-full touch-manipulation text-base sm:ml-auto sm:w-auto sm:min-w-[12rem]"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 animate-spin" size={16} />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
                       Submitting...
                     </>
                   ) : (
                     <>
-                      Submit Application <ArrowRight className="ml-2" size={16} />
+                      Submit Application <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                     </>
                   )}
                 </Button>

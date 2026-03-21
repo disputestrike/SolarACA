@@ -29,13 +29,14 @@ export const applicantsRouter = router({
   submit: publicProcedure
     .input(
       z.object({
-        firstName: z.string().min(1),
-        lastName: z.string().min(1),
-        email: z.string().email(),
-        phone: z.string().min(10),
+        firstName: z.string().min(1).max(100),
+        lastName: z.string().min(1).max(100),
+        email: z.string().email().max(320),
+        phone: z.string().min(10).max(20),
         city: marketTerritoryZodEnum,
         experienceLevel: z.enum(["solar_sales", "outside_sales", "entry_level", "aspiring_leader"]),
-        motivation: z.string().min(10),
+        /** Matches DB `text` / abuse limits — blocks multi‑MB spam bodies */
+        motivation: z.string().min(10).max(50_000),
         resumeBase64: z.string().optional(),
         resumeFileName: z.string().optional(),
       })
