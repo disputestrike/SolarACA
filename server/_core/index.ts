@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { runMigrations } from "./migrate";
 import { ENV } from "./env";
+import { logEmailProviderStatus } from "../services/sendgrid";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -41,6 +42,8 @@ async function startServer() {
       throw err;
     }
   }
+
+  logEmailProviderStatus();
 
   const app = express();
   const server = createServer(app);

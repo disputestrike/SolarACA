@@ -104,11 +104,17 @@ export const applicantsRouter = router({
       // Confirmation email — Resend (RESEND_API_KEY) preferred, else SendGrid
       try {
         const tpl = messageTemplates.applicationReceived.email;
-        await sendEmail(
+        const emailResult = await sendEmail(
           input.email,
           tpl.subject,
           replaceTemplateVariables(tpl.body, { name: input.firstName })
         );
+        if (!emailResult.success) {
+          console.error(
+            "[Applicants] Confirmation email failed (application still saved):",
+            emailResult.error ?? "unknown error"
+          );
+        }
       } catch (err) {
         console.error("[Applicants] Confirmation email failed (application still saved):", err);
       }

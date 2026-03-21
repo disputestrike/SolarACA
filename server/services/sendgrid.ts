@@ -36,6 +36,28 @@ export function isEmailProviderConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim()) || isSendGridConfigured();
 }
 
+/** Log once at startup so deploy logs (e.g. Railway) show whether applicant emails can send. */
+export function logEmailProviderStatus(): void {
+  const resend = Boolean(process.env.RESEND_API_KEY?.trim());
+  const sg = isSendGridConfigured();
+  if (resend) {
+    const from =
+      process.env.RESEND_FROM_EMAIL?.trim() ||
+      process.env.SENDGRID_FROM_EMAIL?.trim() ||
+      "onboarding@resend.dev (default — verify a domain in Resend for production)";
+    console.log(`[Email] Resend enabled. From: ${from}`);
+    if (!process.env.RESEND_FROM_EMAIL?.trim() && !process.env.SENDGRID_FROM_EMAIL?.trim()) {
+      console.warn(
+        "[Email] Set RESEND_FROM_EMAIL to a sender on a domain you verified in Resend (required for production)."
+      );
+    }
+  } else if (sg) {
+    console.log("[Email] SendGrid enabled (no RESEND_API_KEY).");
+  } else {
+    console.warn("[Email] No RESEND_API_KEY or SENDGRID_API_KEY — confirmation emails after apply will not send.");
+  }
+}
+
 function getResendFrom(): string {
   const fromEmail =
     process.env.RESEND_FROM_EMAIL?.trim() ||
@@ -72,11 +94,24 @@ async function sendEmailViaResend(
     });
 
     if (!response.ok) {
-      const errBody = await response.text().catch(() => "");
-      throw new Error(`Resend ${response.status}: ${errBody || response.statusText}`);
+      const raw = await response.text().catch(() => "");
+      let detail = raw;
+      try {
+        const j = JSON.parse(raw) as { message?: string; name?: string };
+        detail = [j.message, j.name].filter(Boolean).join(" — ") || raw;
+      } catch {
+        /* use raw */
+      }
+      throw new Error(`Resend ${response.status}: ${detail || response.statusText}`);
     }
 
-    console.log(`[Resend] Email sent to ${to}`);
+    const okBody = await response.text();
+    try {
+      const data = JSON.parse(okBody) as { id?: string };
+      console.log(`[Resend] Email sent to ${to}${data.id ? ` id=${data.id}` : ""}`);
+    } catch {
+      console.log(`[Resend] Email sent to ${to}`);
+    }
     return { success: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
