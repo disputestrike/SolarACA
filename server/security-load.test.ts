@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MARKET_TERRITORIES } from "@shared/markets";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -74,7 +75,7 @@ describe("SECURITY - SQL Injection Vectors", () => {
       lastName: "Test",
       email: "sqli-first@test.com",
       phone: "5551234567",
-      city: "Tampa",
+      city: "FL - Tampa",
       experienceLevel: "entry_level",
       motivation: "I want to earn money and build a team in solar",
     });
@@ -89,7 +90,7 @@ describe("SECURITY - SQL Injection Vectors", () => {
       lastName: "'; DELETE FROM applicants; --",
       email: "sqli-last@test.com",
       phone: "5551234568",
-      city: "Miami",
+      city: "FL - Orlando",
       experienceLevel: "entry_level",
       motivation: "I want to earn money and build a team in solar",
     });
@@ -104,7 +105,7 @@ describe("SECURITY - SQL Injection Vectors", () => {
       lastName: "SQLi",
       email: "sqli-motiv@test.com",
       phone: "5551234569",
-      city: "Fort Lauderdale",
+      city: "TX - Dallas",
       experienceLevel: "entry_level",
       motivation: "'; UNION SELECT password FROM users WHERE '1'='1'; -- I want financial freedom",
     });
@@ -149,7 +150,7 @@ describe("SECURITY - XSS Attack Vectors", () => {
         lastName: "XSSTest",
         email: `xss-${Math.random().toString(36).substring(7)}@test.com`,
         phone: "5559876543",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow in solar energy sales",
       });
@@ -166,7 +167,7 @@ describe("SECURITY - XSS Attack Vectors", () => {
       lastName: "Test",
       email: `xss-motiv-${Date.now()}@test.com`,
       phone: "5559876544",
-      city: "Miami",
+      city: "FL - Orlando",
       experienceLevel: "outside_sales",
       motivation: xssMotivation,
     });
@@ -191,7 +192,7 @@ describe("SECURITY - Auth & Access Control", () => {
       lastName: "User",
       email: `public-${Date.now()}@test.com`,
       phone: "5551112222",
-      city: "Tampa",
+      city: "FL - Tampa",
       experienceLevel: "entry_level",
       motivation: "I want to earn money and grow in solar energy sales",
     });
@@ -277,7 +278,7 @@ describe("SECURITY - Input Boundary Attacks", () => {
       lastName: "Test",
       email: `null-${Date.now()}@test.com`,
       phone: "5551234567",
-      city: "Tampa",
+      city: "FL - Tampa",
       experienceLevel: "entry_level",
       motivation: "I want to earn money and grow in solar energy sales",
     });
@@ -294,7 +295,7 @@ describe("SECURITY - Input Boundary Attacks", () => {
         lastName: "Test",
         email: longEmail,
         phone: "5551234567",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow in solar energy sales",
       });
@@ -312,7 +313,7 @@ describe("SECURITY - Input Boundary Attacks", () => {
         lastName: "Test",
         email: `phone-${Date.now()}@test.com`,
         phone: "+1 (555) 123-4567",
-        city: "Miami",
+        city: "FL - Orlando",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow in solar energy sales",
       })
@@ -326,7 +327,7 @@ describe("SECURITY - Input Boundary Attacks", () => {
       lastName: "García López",
       email: `unicode-${Date.now()}@test.com`,
       phone: "5551234567",
-      city: "Miami",
+      city: "FL - Orlando",
       experienceLevel: "outside_sales",
       motivation: "Quiero ganar dinero y crecer en energía solar. Financial freedom and leadership.",
     });
@@ -340,7 +341,7 @@ describe("SECURITY - Input Boundary Attacks", () => {
       lastName: "Pro 🌟",
       email: `emoji-${Date.now()}@test.com`,
       phone: "5551234567",
-      city: "Tampa",
+      city: "FL - Tampa",
       experienceLevel: "solar_sales",
       motivation: "I want financial freedom 💰 and to build a team 🏆 in solar energy ☀️",
     });
@@ -417,7 +418,7 @@ describe("LOAD TEST - Concurrent Requests", () => {
         lastName: "User",
         email: `load-${i}-${Date.now()}@test.com`,
         phone: `555000${i}000`,
-        city: ["Tampa", "Miami", "Fort Lauderdale"][i % 3] as any,
+        city: MARKET_TERRITORIES[i % MARKET_TERRITORIES.length] as any,
         experienceLevel: ["entry_level", "outside_sales", "solar_sales", "aspiring_leader"][i % 4] as any,
         motivation: "I want financial freedom and to build a team in solar energy",
       })
@@ -495,7 +496,7 @@ describe("STABILITY - Error Recovery", () => {
       lastName: "Test",
       email: `recovery-${Date.now()}@test.com`,
       phone: "5551234567",
-      city: "Tampa",
+      city: "FL - Tampa",
       experienceLevel: "entry_level",
       motivation: "I want to earn money and grow in solar energy sales",
     });

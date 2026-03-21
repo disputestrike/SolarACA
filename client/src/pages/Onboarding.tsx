@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { CheckCircle2, Play, BookOpen, Users, TrendingUp } from "lucide-react";
+import { BRAND_NAME } from "@shared/markets";
 
 const trainingModules = [
   {
@@ -54,7 +55,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-muted/30">
       <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome to Florida Solar Sales Academy</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome to {BRAND_NAME}</h1>
           <p className="text-muted-foreground mb-6">Your personalized onboarding and training portal</p>
 
           <div className="grid md:grid-cols-3 gap-6">

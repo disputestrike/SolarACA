@@ -4,10 +4,19 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowRight, Upload, CheckCircle, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { BRAND_NAME, MARKET_TERRITORIES, marketsGroupedByState, type MarketTerritory } from "@shared/markets";
 
 type Step = "info" | "experience" | "motivation" | "resume" | "success";
 
@@ -23,7 +32,7 @@ export default function Apply() {
     lastName: "",
     email: "",
     phone: "",
-    city: "",
+    city: MARKET_TERRITORIES[0],
     experienceLevel: "",
     motivation: "",
     resume: null as File | null,
@@ -144,7 +153,7 @@ export default function Apply() {
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
-          city: formData.city as "Tampa" | "Miami" | "Fort Lauderdale",
+          city: formData.city as MarketTerritory,
           experienceLevel: formData.experienceLevel as "solar_sales" | "outside_sales" | "entry_level" | "aspiring_leader",
           motivation: formData.motivation,
           resumeBase64,
@@ -169,7 +178,7 @@ export default function Apply() {
       <div className="container mx-auto max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Join Florida Solar Sales Academy</h1>
+          <h1 className="text-4xl font-bold mb-2">Join {BRAND_NAME}</h1>
           <p className="text-muted-foreground">Start your journey to financial freedom and leadership</p>
         </div>
 
@@ -247,15 +256,22 @@ export default function Apply() {
               </div>
 
               <div>
-                <Label htmlFor="city">Which city are you in?</Label>
+                <Label htmlFor="city">Which market are you applying for?</Label>
                 <Select value={formData.city} onValueChange={handleCityChange}>
-                  <SelectTrigger id="city">
-                    <SelectValue placeholder="Select your city" />
+                  <SelectTrigger id="city" className="max-w-full">
+                    <SelectValue placeholder="Select state — city" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Tampa">Tampa</SelectItem>
-                    <SelectItem value="Miami">Miami</SelectItem>
-                    <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
+                  <SelectContent className="max-h-[min(24rem,70vh)]">
+                    {marketsGroupedByState().map((group) => (
+                      <SelectGroup key={group.stateCode}>
+                        <SelectLabel>{group.stateName}</SelectLabel>
+                        {group.items.map(({ territory }) => (
+                          <SelectItem key={territory} value={territory}>
+                            {territory}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -305,7 +321,7 @@ export default function Apply() {
                   name="motivation"
                   value={formData.motivation}
                   onChange={handleInputChange}
-                  placeholder="I'm excited about earning six figures, building my own team, and making an impact on Florida's clean energy future..."
+                  placeholder="I'm excited about earning six figures, building my own team, and making an impact on America's clean energy future..."
                   rows={6}
                 />
                 <p className="text-xs text-muted-foreground mt-2">

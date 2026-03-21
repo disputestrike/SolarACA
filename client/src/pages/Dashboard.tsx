@@ -2,13 +2,26 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
 import { Loader2, Mail, Phone, FileText, MapPin, LogOut, Shield } from "lucide-react";
+import {
+  formatApplicantLocation,
+  marketsGroupedByState,
+  parseMarketTerritory,
+} from "@shared/markets";
 
 type ApplicantStatus = "new" | "screened" | "interviewed" | "offered" | "hired" | "rejected";
 
@@ -121,14 +134,21 @@ export default function Dashboard() {
               className="flex-1"
             />
             <Select value={filterCity} onValueChange={setFilterCity}>
-              <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="All Cities" />
+              <SelectTrigger className="w-full md:w-56">
+                <SelectValue placeholder="All markets" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Cities</SelectItem>
-                <SelectItem value="Tampa">Tampa</SelectItem>
-                <SelectItem value="Miami">Miami</SelectItem>
-                <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
+              <SelectContent className="max-h-[min(24rem,70vh)]">
+                <SelectItem value="all">All markets</SelectItem>
+                {marketsGroupedByState().map((group) => (
+                  <SelectGroup key={group.stateCode}>
+                    <SelectLabel>{group.stateName}</SelectLabel>
+                    {group.items.map(({ territory }) => (
+                      <SelectItem key={territory} value={territory}>
+                        {territory}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -273,6 +293,8 @@ function KanbanColumn({
         {applicants.map((app: any) => {
           const hasResume = Boolean(app.resumeUrl || app.hasResumeBlob);
           const resumeHref = app.resumeUrl || `/api/applicants/${app.id}/resume`;
+          const loc = parseMarketTerritory(String(app.city ?? ""));
+          const locationLabel = formatApplicantLocation(String(app.city ?? ""));
           return (
             <div
               key={app.id}
@@ -286,16 +308,28 @@ function KanbanColumn({
                   onSelect(app);
                 }
               }}
-              aria-label={`${app.firstName} ${app.lastName}, ${app.city}. Open details.`}
+              aria-label={`${app.firstName} ${app.lastName}, ${locationLabel}. Open details.`}
             >
-              <div className="flex items-start justify-between gap-1.5 min-w-0">
-                <p className="font-semibold text-xs leading-tight truncate min-w-0">
-                  {app.firstName} {app.lastName}
-                </p>
-                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0 max-w-[42%]">
-                  <MapPin className="h-2.5 w-2.5 shrink-0 opacity-80" aria-hidden />
-                  <span className="truncate">{app.city}</span>
-                </span>
+              <p className="font-semibold text-xs leading-tight truncate min-w-0">
+                {app.firstName} {app.lastName}
+              </p>
+              <div className="flex gap-1.5 mt-1 min-w-0" title={locationLabel}>
+                <MapPin className="h-3 w-3 shrink-0 text-primary mt-0.5" aria-hidden />
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="text-[10px] font-semibold text-foreground leading-tight truncate">
+                    {loc.city || app.city}
+                  </p>
+                  {loc.stateCode ? (
+                    <p className="text-[9px] text-muted-foreground leading-tight">
+                      {loc.stateName}{" "}
+                      <span className="font-mono text-muted-foreground/90">({loc.stateCode})</span>
+                    </p>
+                  ) : (
+                    <p className="text-[9px] text-muted-foreground leading-tight truncate" title={String(app.city)}>
+                      {app.city}
+                    </p>
+                  )}
+                </div>
               </div>
               <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-tight" title={app.email}>
                 {app.email}
@@ -362,6 +396,8 @@ function ApplicantDetailModal({
     setNewStatus(applicant.status as ApplicantStatus);
   }, [applicant.id, applicant.status]);
 
+  const location = parseMarketTerritory(String(applicant.city ?? ""));
+
   const handleStatusUpdate = async () => {
     await updateStatusMutation.mutateAsync({ id: applicant.id, status: newStatus });
     onStatusChange();
@@ -401,8 +437,26 @@ function ApplicantDetailModal({
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">City</p>
-              <p className="font-semibold mt-1">{applicant.city}</p>
+              <p className="text-xs text-muted-foreground">City &amp; state</p>
+              <div className="flex items-start gap-2 mt-1">
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  {location.stateCode ? (
+                    <>
+                      <p className="font-semibold">{location.city}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {location.stateName}{" "}
+                        <span className="font-mono text-xs">({location.stateCode})</span>
+                      </p>
+                    </>
+                  ) : (
+                    <p className="font-semibold">{applicant.city}</p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground/90 mt-1 font-mono" title="Stored market value">
+                    {applicant.city}
+                  </p>
+                </div>
+              </div>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Experience Level</p>

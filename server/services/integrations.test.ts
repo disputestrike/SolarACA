@@ -148,7 +148,7 @@ describe("SendGrid Email Service", () => {
   it("sendEmail handles special characters in subject", async () => {
     const result = await sendEmail(
       "test@example.com",
-      "🌞 Florida Solar Sales Academy - $100k+ Opportunity!",
+      "🌞 National Solar Sales Academy - $100k+ Opportunity!",
       "Test body"
     );
     expect(result.success).toBe(true);

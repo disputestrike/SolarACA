@@ -4,6 +4,8 @@
  * When no provider is configured, emails are logged but not sent.
  */
 
+import { BRAND_NAME } from "@shared/markets";
+
 interface SendGridConfig {
   apiKey: string;
   fromEmail: string;
@@ -12,8 +14,8 @@ interface SendGridConfig {
 
 function getSendGridConfig(): SendGridConfig | null {
   const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@floridasolarsalesacademy.com";
-  const fromName = process.env.SENDGRID_FROM_NAME || "Florida Solar Sales Academy";
+  const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@nationalsolarsalesacademy.com";
+  const fromName = process.env.SENDGRID_FROM_NAME || BRAND_NAME;
 
   if (!apiKey) {
     return null;
@@ -42,7 +44,7 @@ function getResendFrom(): string {
   const fromName =
     process.env.RESEND_FROM_NAME?.trim() ||
     process.env.SENDGRID_FROM_NAME ||
-    "Florida Solar Sales Academy";
+    BRAND_NAME;
   return `${fromName} <${fromEmail}>`;
 }
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { waitlistCityZodEnum } from "@shared/markets";
 import { publicProcedure, router } from "../_core/trpc";
 import { insertTalentInterest } from "../db";
 
@@ -8,7 +9,7 @@ export const talentRouter = router({
       z.object({
         firstName: z.string().min(1).max(100),
         email: z.string().email().max(320),
-        city: z.enum(["Tampa", "Miami", "Fort Lauderdale", "Other"]),
+        city: waitlistCityZodEnum,
       })
     )
     .mutation(async ({ input }) => {

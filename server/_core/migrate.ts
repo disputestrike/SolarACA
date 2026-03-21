@@ -128,9 +128,9 @@ const TABLES = [
 
 const SEEDS = [
   `INSERT IGNORE INTO \`testimonials\` (\`name\`,\`title\`,\`city\`,\`content\`,\`earnings\`,\`featured\`) VALUES
-    ('Marcus Johnson','Senior Solar Sales Rep','Tampa','Started with no solar experience, now I am leading a team of 5. The training and support here is unmatched.','$180k+',TRUE),
-    ('Sarah Chen','Sales Manager','Miami','The commission structure is transparent and generous. I have built real wealth doing work I believe in.','$220k+',TRUE),
-    ('David Rodriguez','Installation Lead','Fort Lauderdale','Transitioned from roofing to solar. Best decision I ever made. The team feels like family.','$150k+',TRUE)`,
+    ('Marcus Johnson','Senior Solar Sales Rep','FL - Orlando','Started with no solar experience, now I am leading a team of 5. The training and support here is unmatched.','$180k+',TRUE),
+    ('Sarah Chen','Sales Manager','TX - Dallas','The commission structure is transparent and generous. I have built real wealth doing work I believe in.','$220k+',TRUE),
+    ('David Rodriguez','Installation Lead','GA - Atlanta','Transitioned from roofing to solar. Best decision I ever made. The team feels like family.','$150k+',TRUE)`,
 
   `INSERT IGNORE INTO \`trainingModules\` (\`title\`,\`description\`,\`category\`,\`duration\`,\`order\`) VALUES
     ('Solar Sales Fundamentals','Core sales techniques for the solar industry','sales_fundamentals',45,1),

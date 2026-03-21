@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import { appRouter } from "./routers";
 import { COOKIE_NAME } from "../shared/const";
+import { BRAND_NAME, MARKET_TERRITORIES } from "@shared/markets";
 import type { TrpcContext } from "./_core/context";
 import { calculateQualificationScore } from "./db";
 
@@ -26,7 +27,7 @@ function createAuthContext(role: "admin" | "user" = "admin"): TrpcContext {
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-owner",
-    email: "owner@floridasolarsalesacademy.com",
+    email: "owner@nationalsolarsalesacademy.com",
     name: "Test Owner",
     loginMethod: "manus",
     role,
@@ -215,7 +216,7 @@ describe("EDGE CASES - Input validation and boundaries", () => {
         lastName: "Doe",
         email: "test@test.com",
         phone: "1234567890",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow",
       })
@@ -230,7 +231,7 @@ describe("EDGE CASES - Input validation and boundaries", () => {
         lastName: "Doe",
         email: "not-an-email",
         phone: "1234567890",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow",
       })
@@ -245,7 +246,7 @@ describe("EDGE CASES - Input validation and boundaries", () => {
         lastName: "Doe",
         email: "test@test.com",
         phone: "123",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow",
       })
@@ -275,7 +276,7 @@ describe("EDGE CASES - Input validation and boundaries", () => {
         lastName: "Doe",
         email: "test@test.com",
         phone: "1234567890",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "invalid_level" as any,
         motivation: "I want to earn money and grow",
       })
@@ -290,7 +291,7 @@ describe("EDGE CASES - Input validation and boundaries", () => {
         lastName: "Doe",
         email: "test@test.com",
         phone: "1234567890",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "short",
       })
@@ -386,7 +387,7 @@ describe("CHAOS TESTS - SQL Injection, XSS, and Overflow", () => {
         lastName: "Doe",
         email: "sql@test.com",
         phone: "1234567890",
-        city: "Tampa",
+        city: "FL - Tampa",
         experienceLevel: "entry_level",
         motivation: "I want to earn money and grow in solar",
       })
@@ -401,7 +402,7 @@ describe("CHAOS TESTS - SQL Injection, XSS, and Overflow", () => {
         lastName: "Test",
         email: "xss@test.com",
         phone: "1234567890",
-        city: "Miami",
+        city: "FL - Orlando",
         experienceLevel: "entry_level",
         motivation: '<script>alert("XSS")</script> I want to earn money and grow',
       })
@@ -417,7 +418,7 @@ describe("CHAOS TESTS - SQL Injection, XSS, and Overflow", () => {
         lastName: "Text",
         email: "long@test.com",
         phone: "1234567890",
-        city: "Fort Lauderdale",
+        city: "TX - Dallas",
         experienceLevel: "solar_sales",
         motivation: longMotivation,
       })
@@ -432,7 +433,7 @@ describe("CHAOS TESTS - SQL Injection, XSS, and Overflow", () => {
         lastName: "García",
         email: "jose@test.com",
         phone: "1234567890",
-        city: "Miami",
+        city: "FL - Orlando",
         experienceLevel: "outside_sales",
         motivation: "Quiero libertad financiera y crecer en solar energy",
       })
@@ -475,7 +476,8 @@ describe("COMMUNICATION TEMPLATES - Correctness", () => {
     const caller = appRouter.createCaller(createAuthContext());
     const templates = await caller.communications.getTemplates();
     for (const [key, template] of Object.entries(templates)) {
-      const sms = (template as any).sms as string;
+      const sms = (template as any).sms as string | undefined;
+      if (!sms) continue;
       expect(sms).toContain("{name}");
     }
   });
@@ -491,18 +493,18 @@ describe("COMMUNICATION TEMPLATES - Correctness", () => {
     }
   });
 
-  it("all templates reference Florida Solar Sales Academy branding", async () => {
+  it("all templates reference National Solar Sales Academy branding", async () => {
     const caller = appRouter.createCaller(createAuthContext());
     const templates = await caller.communications.getTemplates();
     for (const [key, template] of Object.entries(templates)) {
-      const sms = (template as any).sms as string;
+      const sms = (template as any).sms as string | undefined;
       const emailBody = (template as any).email.body as string;
       const emailSubject = (template as any).email.subject as string;
       // At least one of sms, email subject, or email body should reference the academy
       const hasReference =
-        sms.includes("Florida Solar Sales Academy") ||
-        emailBody.includes("Florida Solar Sales Academy") ||
-        emailSubject.includes("Florida Solar Sales Academy");
+        (sms?.includes(BRAND_NAME) ?? false) ||
+        emailBody.includes(BRAND_NAME) ||
+        emailSubject.includes(BRAND_NAME);
       expect(hasReference).toBe(true);
     }
   });
@@ -593,13 +595,10 @@ describe("DATA INTEGRITY - Schema and type consistency", () => {
     }
   });
 
-  it("city enum matches frontend cities", () => {
-    const validCities = ["Tampa", "Miami", "Fort Lauderdale"];
-    // These should be the only valid cities in the submit procedure
-    const caller = appRouter.createCaller(createAuthContext());
+  it("city enum matches frontend markets (ST - City)", () => {
+    const validCities = [...MARKET_TERRITORIES];
     for (const city of validCities) {
-      // Should not throw validation error
-      expect(["Tampa", "Miami", "Fort Lauderdale"]).toContain(city);
+      expect(MARKET_TERRITORIES).toContain(city);
     }
   });
 });
@@ -612,7 +611,7 @@ describe("SECURITY TESTS - Auth, injection, data exposure", () => {
     const caller = appRouter.createCaller(createAuthContext());
     // Drizzle ORM uses parameterized queries
     const result = await caller.applicants.list({
-      city: "Tampa' OR '1'='1",
+      city: "FL - Tampa' OR '1'='1",
     });
     // Should return empty array, not all records
     expect(Array.isArray(result)).toBe(true);
@@ -650,19 +649,18 @@ describe("SECURITY TESTS - Auth, injection, data exposure", () => {
 // ============================================================
 // 9. BRANDING CONSISTENCY TESTS
 // ============================================================
-describe("BRANDING - Florida Solar Sales Academy consistency", () => {
+describe("BRANDING - National Solar Sales Academy consistency", () => {
   it("communication templates use correct branding", async () => {
     const caller = appRouter.createCaller(createAuthContext());
     const templates = await caller.communications.getTemplates();
-    
-    // Check all templates reference the academy
+
     for (const [key, template] of Object.entries(templates)) {
-      const sms = (template as any).sms as string;
+      const sms = (template as any).sms as string | undefined;
       const emailBody = (template as any).email.body as string;
       const emailSubject = (template as any).email.subject as string;
-      
-      const allText = sms + emailBody + emailSubject;
-      expect(allText).toContain("Florida Solar");
+
+      const allText = (sms ?? "") + emailBody + emailSubject;
+      expect(allText).toContain(BRAND_NAME);
     }
   });
 });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { marketTerritoryZodEnum } from "@shared/markets";
 import { publicProcedure, createPermissionProcedure, router } from "../_core/trpc";
 import {
   createApplicant,
@@ -30,7 +31,7 @@ export const applicantsRouter = router({
         lastName: z.string().min(1),
         email: z.string().email(),
         phone: z.string().min(10),
-        city: z.enum(["Tampa", "Miami", "Fort Lauderdale"]),
+        city: marketTerritoryZodEnum,
         experienceLevel: z.enum(["solar_sales", "outside_sales", "entry_level", "aspiring_leader"]),
         motivation: z.string().min(10),
         resumeBase64: z.string().optional(),

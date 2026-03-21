@@ -1,6 +1,6 @@
-# Florida Solar Sales Academy - Recruiting & Onboarding Platform
+# National Solar Sales Academy - Recruiting & Onboarding Platform
 
-A comprehensive recruiting and onboarding platform for solar sales professionals in Florida, featuring a multi-step candidate funnel, owner dashboard with Kanban-style applicant tracking, automated communication via Twilio and SendGrid, and interview scheduling via Calendly.
+A comprehensive recruiting and onboarding platform for solar sales professionals across the United States, featuring a multi-step candidate funnel, owner dashboard with Kanban-style applicant tracking, automated communication via Twilio and SendGrid, and interview scheduling via Calendly.
 
 ## Features
 
@@ -54,8 +54,8 @@ A comprehensive recruiting and onboarding platform for solar sales professionals
 
 #### SendGrid (Email)
 - `SENDGRID_API_KEY` - SendGrid API key
-- `SENDGRID_FROM_EMAIL` - Verified sender email (default: noreply@floridasolarsalesacademy.com)
-- `SENDGRID_FROM_NAME` - Sender display name (default: Florida Solar Sales Academy)
+- `SENDGRID_FROM_EMAIL` - Verified sender email (default: noreply@nationalsolarsalesacademy.com)
+- `SENDGRID_FROM_NAME` - Sender display name (default: National Solar Sales Academy)
 
 #### Calendly (Scheduling)
 - `CALENDLY_API_KEY` - Calendly Personal Access Token
@@ -90,7 +90,7 @@ pnpm test
 - **Load tests** - 20 concurrent requests, 50 rapid sequential calls
 - **Integration tests** - Twilio, SendGrid, Calendly service modules (28 tests)
 - **Edge case tests** - Input validation, boundary conditions, error recovery
-- **Branding tests** - Florida Solar Sales Academy consistency
+- **Branding tests** - National Solar Sales Academy consistency
 
 ## Project Structure
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BRAND_NAME } from "@shared/markets";
 import { createPermissionProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { communicationLog } from "../../drizzle/schema";
@@ -9,47 +10,47 @@ import { sendEmail } from "../services/sendgrid";
 // Message templates
 export const messageTemplates = {
   applicationReceived: {
-    sms: "Hi {name}! We received your application for Florida Solar Sales Academy. We'll review it and be in touch soon. Exciting times ahead!",
+    sms: `Hi {name}! We received your application for ${BRAND_NAME}. We'll review it and be in touch soon. Exciting times ahead!`,
     email: {
-      subject: "Application Received - Florida Solar Sales Academy",
-      body: "Hi {name},\n\nThank you for applying to Florida Solar Sales Academy — we've received your application and resume (if you attached one).\n\nOur team reviews every submission. If your background is a strong fit, someone will reach out within 24–48 hours to schedule a phone screen.\n\nThank you for your interest in solar sales.\n\nBest regards,\nFlorida Solar Sales Academy Team",
+      subject: `Application Received - ${BRAND_NAME}`,
+      body: `Hi {name},\n\nThank you for applying to ${BRAND_NAME} — we've received your application and resume (if you attached one).\n\nOur team reviews every submission. If your background is a strong fit, someone will reach out within 24–48 hours to schedule a phone screen.\n\nThank you for your interest in solar sales.\n\nBest regards,\n${BRAND_NAME} Team`,
     },
   },
   interviewScheduled: {
     sms: "Great news {name}! Your interview is scheduled for {date} at {time}. Reply CONFIRM to confirm or call us if you have questions.",
     email: {
-      subject: "Interview Scheduled - Florida Solar Sales Academy",
-      body: "Hi {name},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: {date}\nTime: {time}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nFlorida Solar Sales Academy Team",
+      subject: `Interview Scheduled - ${BRAND_NAME}`,
+      body: `Hi {name},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: {date}\nTime: {time}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\n${BRAND_NAME} Team`,
     },
   },
   interviewReminder: {
-    sms: "Reminder {name}: Your interview with Florida Solar Sales Academy is tomorrow at {time}. Looking forward to meeting you!",
+    sms: `Reminder {name}: Your interview with ${BRAND_NAME} is tomorrow at {time}. Looking forward to meeting you!`,
     email: {
-      subject: "Interview Reminder - Florida Solar Sales Academy",
-      body: "Hi {name},\n\nThis is a friendly reminder that your interview with Florida Solar Sales Academy is scheduled for tomorrow at {time}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\nFlorida Solar Sales Academy Team",
+      subject: `Interview Reminder - ${BRAND_NAME}`,
+      body: `Hi {name},\n\nThis is a friendly reminder that your interview with ${BRAND_NAME} is scheduled for tomorrow at {time}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\n${BRAND_NAME} Team`,
     },
   },
   offerSent: {
     sms: "Exciting news {name}! We'd like to extend an offer to join our team. Check your email for details.",
     email: {
-      subject: "Job Offer - Florida Solar Sales Academy",
-      body: "Hi {name},\n\nCongratulations! We're pleased to extend an offer for the position of Solar Sales Professional at Florida Solar Sales Academy.\n\nPlease review the attached offer letter and let us know if you have any questions.\n\nWe're excited to have you join our team!\n\nBest regards,\nFlorida Solar Sales Academy Team",
+      subject: `Job Offer - ${BRAND_NAME}`,
+      body: `Hi {name},\n\nCongratulations! We're pleased to extend an offer for the position of Solar Sales Professional at ${BRAND_NAME}.\n\nPlease review the attached offer letter and let us know if you have any questions.\n\nWe're excited to have you join our team!\n\nBest regards,\n${BRAND_NAME} Team`,
     },
   },
   trainingStarting: {
-    sms: "Welcome to Florida Solar Sales Academy {name}! Your training starts {date}. Check your email for training schedule and materials.",
+    sms: `Welcome to ${BRAND_NAME} {name}! Your training starts {date}. Check your email for training schedule and materials.`,
     email: {
-      subject: "Welcome to Florida Solar Sales Academy - Training Schedule",
-      body: "Hi {name},\n\nWelcome to the Florida Solar Sales Academy family! We're excited to have you on board.\n\nYour training program begins on {date}. Please find the detailed schedule and pre-work materials attached.\n\nGet ready to launch your solar career!\n\nBest regards,\nFlorida Solar Sales Academy Team",
+      subject: `Welcome to ${BRAND_NAME} - Training Schedule`,
+      body: `Hi {name},\n\nWelcome to the ${BRAND_NAME} family! We're excited to have you on board.\n\nYour training program begins on {date}. Please find the detailed schedule and pre-work materials attached.\n\nGet ready to launch your solar career!\n\nBest regards,\n${BRAND_NAME} Team`,
     },
   },
   /** Sent when a super admin invites dashboard access by email (staff router). */
   staffInvite: {
     email: {
-      subject: "You're invited — Florida Solar Sales Academy dashboard ({roleLabel})",
+      subject: `You're invited — ${BRAND_NAME} dashboard ({roleLabel})`,
       body: `Hello,
 
-You've been invited to join the Florida Solar Sales Academy recruiter dashboard as: {roleLabel}
+You've been invited to join the ${BRAND_NAME} recruiter dashboard as: {roleLabel}
 
 Use this Google account email: {inviteeEmail}
 
@@ -62,7 +63,7 @@ Use this Google account email: {inviteeEmail}
 If you weren't expecting this, you can ignore this email.
 
 — {invitedByName}
-Florida Solar Sales Academy`,
+${BRAND_NAME}`,
     },
   },
 };

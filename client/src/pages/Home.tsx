@@ -2,12 +2,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 import { ArrowRight, Zap, Leaf, TrendingUp, Users, Sun, MapPin, DollarSign, Shield, Brain, Phone, Mail, CheckCircle, XCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { BRAND_NAME, MARKET_TERRITORIES, MARKET_TERRITORY_COUNT, marketsGroupedByState, type WaitlistCity } from "@shared/markets";
 
 const IMAGES = {
   hero: "https://d2xsxph8kpxj0f.cloudfront.net/310519663280407830/TovehVTntbKREJsUiV75rg/hero-bg_a27e8353.jpg",
@@ -21,21 +30,21 @@ const testimonials = [
   {
     name: "Marcus Johnson",
     title: "Senior Solar Sales Rep",
-    city: "Tampa",
+    city: "FL — Orlando",
     earnings: "$180k+",
     quote: "Started with no solar experience, now I'm leading a team of 5. The training and support here is unmatched.",
   },
   {
     name: "Sarah Chen",
     title: "Sales Manager",
-    city: "Miami",
+    city: "TX — Dallas",
     earnings: "$220k+",
     quote: "The commission structure is transparent and generous. I've built real wealth doing work I believe in.",
   },
   {
     name: "David Rodriguez",
     title: "Installation Lead",
-    city: "Fort Lauderdale",
+    city: "GA — Atlanta",
     earnings: "$150k+",
     quote: "Transitioned from roofing to solar. Best decision I ever made. The team feels like family.",
   },
@@ -48,16 +57,10 @@ const solarFacts = [
   { title: "208-236x Carbon Reduction", description: "One acre of solar panels reduces CO\u2082 emissions 208-236 times more per year than an acre of trees." },
 ];
 
-const cities = [
-  { name: "Tampa", description: "Growing solar market with high demand for energy-conscious homeowners", icon: "🌴" },
-  { name: "Miami", description: "Premium market with excellent earning potential and year-round sunshine", icon: "🌊" },
-  { name: "Fort Lauderdale", description: "Established territory with strong community support and solar adoption", icon: "☀️" },
-];
-
 function TalentWaitlistSection() {
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-  const [city, setCity] = useState<"Tampa" | "Miami" | "Fort Lauderdale" | "Other">("Tampa");
+  const [city, setCity] = useState<WaitlistCity>(MARKET_TERRITORIES[0]);
   const [done, setDone] = useState(false);
   const joinMutation = trpc.talent.joinWaitlist.useMutation({
     onSuccess: () => {
@@ -107,15 +110,22 @@ function TalentWaitlistSection() {
         />
       </div>
       <div>
-        <Label>City</Label>
-        <Select value={city} onValueChange={(v) => setCity(v as typeof city)}>
+        <Label>Market</Label>
+        <Select value={city} onValueChange={(v) => setCity(v as WaitlistCity)}>
           <SelectTrigger className="mt-1.5">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Tampa">Tampa</SelectItem>
-            <SelectItem value="Miami">Miami</SelectItem>
-            <SelectItem value="Fort Lauderdale">Fort Lauderdale</SelectItem>
+          <SelectContent className="max-h-[min(24rem,70vh)]">
+            {marketsGroupedByState().map((group) => (
+              <SelectGroup key={group.stateCode}>
+                <SelectLabel>{group.stateName}</SelectLabel>
+                {group.items.map(({ territory }) => (
+                  <SelectItem key={territory} value={territory}>
+                    {territory}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
             <SelectItem value="Other">Other</SelectItem>
           </SelectContent>
         </Select>
@@ -144,7 +154,7 @@ const faqs = [
   },
   {
     q: "Is this a job or am I starting my own business?",
-    a: "This is a career position with Florida Solar Sales Academy. You are part of our team — not a contractor starting from scratch. You get full training, a mentor, a defined territory, and a compensation structure from day one. You earn uncapped commission, meaning your results directly determine your income.",
+    a: `This is a career position with ${BRAND_NAME}. You are part of our team — not a contractor starting from scratch. You get full training, a mentor, a defined territory, and a compensation structure from day one. You earn uncapped commission, meaning your results directly determine your income.`,
   },
   {
     q: "How fast can I start earning?",
@@ -152,7 +162,7 @@ const faqs = [
   },
   {
     q: "What cities do you operate in?",
-    a: "We are currently hiring in Tampa, Miami, and Fort Lauderdale. Each market has its own team structure, territory map, and leadership pipeline. Choose the city closest to you and we will match you to the right team.",
+    a: `We are hiring across Florida, Texas, South Carolina, North Carolina, and Georgia — including Orlando, Tampa, Dallas, Houston, San Antonio, and other major metros (see our Locations section). Each market has its own team structure, territory map, and leadership pipeline. Choose the market closest to you and we will match you to the right team.`,
   },
   {
     q: "What does the training look like?",
@@ -195,7 +205,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-2 hover:opacity-90 transition">
             <Sun className="h-7 w-7" />
-            Florida Solar Sales Academy
+            {BRAND_NAME}
           </Link>
           <div className="hidden md:flex items-center gap-6">
             <a href="#problem" className="text-sm text-muted-foreground hover:text-primary transition">Why Solar</a>
@@ -219,7 +229,7 @@ export default function Home() {
             {/* NEW: No experience badge */}
             <div className="flex flex-wrap gap-3">
               <div className="inline-block bg-primary/90 text-primary-foreground px-4 py-1.5 rounded-full text-sm font-semibold">
-                Now Hiring Across Florida
+                Now Hiring Across the U.S.
               </div>
               <div className="inline-block bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold border border-white/30">
                 ✓ No Solar Experience Required
@@ -229,7 +239,7 @@ export default function Home() {
               Build Your Future in <span className="text-primary">Solar Energy</span>
             </h1>
             <p className="text-xl text-gray-200 leading-relaxed">
-              Earn $100k-$300k+ your first year. Lead your own team. Help Florida families achieve energy independence while building real wealth in the fastest-growing industry in America.
+              Earn $100k-$300k+ your first year. Lead your own team. Help homeowners achieve energy independence while building real wealth in the fastest-growing industry in America.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button size="lg" onClick={() => navigate("/apply")} className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
@@ -241,7 +251,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="flex flex-wrap gap-6 pt-4 text-white/80 text-sm">
-              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Tampa · Miami · Fort Lauderdale</div>
+              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> FL · TX · SC · NC · GA</div>
               <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Uncapped Commission</div>
             </div>
           </div>
@@ -257,8 +267,8 @@ export default function Home() {
               <p className="text-sm opacity-80">Candidates Placed</p>
             </div>
             <div>
-              <p className="text-3xl font-bold">3</p>
-              <p className="text-sm opacity-80">Florida Markets</p>
+              <p className="text-3xl font-bold">{MARKET_TERRITORY_COUNT}</p>
+              <p className="text-sm opacity-80">Metro Markets</p>
             </div>
             <div>
               <p className="text-3xl font-bold">$180k+</p>
@@ -405,7 +415,7 @@ export default function Home() {
               { icon: <TrendingUp className="h-8 w-8 text-primary" />, title: "Clear Leadership Path", desc: "Rep → Senior Rep → Team Lead → Regional Manager. We promote from within. Your ceiling is how high you want to go." },
               { icon: <Shield className="h-8 w-8 text-primary" />, title: "Proven Sales System", desc: "A tested, repeatable process for finding prospects, presenting solar, handling objections, and closing deals — no guessing." },
               { icon: <Zap className="h-8 w-8 text-primary" />, title: "Live Weekly Coaching", desc: "Group coaching sessions every week covering objection handling, deal reviews, and market updates to keep you sharp." },
-              { icon: <Leaf className="h-8 w-8 text-primary" />, title: "Work You Believe In", desc: "Help Florida homeowners slash their energy bills and go green. Every sale makes a real difference — and you'll know it." },
+              { icon: <Leaf className="h-8 w-8 text-primary" />, title: "Work You Believe In", desc: "Help homeowners slash their energy bills and go green. Every sale makes a real difference — and you'll know it." },
             ].map((item, i) => (
               <Card key={i} className="p-8 border-border hover:border-primary/50 hover:shadow-lg transition-all group">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition">
@@ -426,14 +436,14 @@ export default function Home() {
             <div>
               <h2 className="text-4xl font-bold mb-6">The Solar Revolution is <span className="text-primary">Here</span></h2>
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Florida receives over 230 days of sunshine per year, making it one of the most lucrative solar markets in the nation. The solar industry is projected to grow 400% by 2030, creating hundreds of thousands of new jobs.
+                The Sun Belt and Southeast are among the fastest-growing solar regions in the country. The solar industry is projected to grow 400% by 2030, creating hundreds of thousands of new jobs.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 Every home you help go solar reduces carbon emissions by 3-4 tons per year — the equivalent of planting 100 trees. Real income. Real impact.
               </p>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-2xl">
-              <img src={IMAGES.solarRevolution} alt="Solar panels on Florida rooftop" className="w-full h-[350px] object-cover" />
+              <img src={IMAGES.solarRevolution} alt="Residential solar installation" className="w-full h-[350px] object-cover" />
             </div>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -476,7 +486,7 @@ export default function Home() {
             </div>
             {/* Right: Join */}
             <div className="bg-primary p-10">
-              <h3 className="text-xl font-bold mb-6 text-primary-foreground">Join Florida Solar Sales Academy</h3>
+              <h3 className="text-xl font-bold mb-6 text-primary-foreground">Join {BRAND_NAME}</h3>
               <ul className="space-y-4">
                 {[
                   "More focus on growing your income, less stress",
@@ -532,16 +542,24 @@ export default function Home() {
       {/* Locations */}
       <section id="locations" className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-5xl">
-          <h2 className="text-4xl font-bold text-center mb-4">We&apos;re Hiring Across <span className="text-primary">Florida</span></h2>
-          <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">Choose your territory. Each market has its own team, leadership structure, and earning potential.</p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {cities.map((city) => (
-              <Card key={city.name} className="p-8 text-center border-primary/20 hover:border-primary hover:shadow-lg transition-all">
-                <div className="text-4xl mb-4">{city.icon}</div>
-                <h3 className="text-2xl font-bold text-primary mb-2">{city.name}</h3>
-                <p className="text-muted-foreground mb-6">{city.description}</p>
-                <Button onClick={() => navigate("/apply")} variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                  Apply in {city.name}
+          <h2 className="text-4xl font-bold text-center mb-4">We&apos;re Hiring Across <span className="text-primary">Multiple States</span></h2>
+          <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+            Markets are listed as <span className="font-medium text-foreground">State — City</span> (for example FL — Orlando). Each territory has its own team, leadership structure, and earning potential.
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {marketsGroupedByState().map((group) => (
+              <Card key={group.stateCode} className="p-6 border-primary/20 hover:border-primary hover:shadow-lg transition-all text-left">
+                <h3 className="text-lg font-bold text-primary mb-3">{group.stateName}</h3>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                  {group.items.map(({ territory }) => (
+                    <li key={territory} className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{territory.replace(" - ", " — ")}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button onClick={() => navigate("/apply")} variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
+                  Apply in {group.stateName}
                 </Button>
               </Card>
             ))}
@@ -637,7 +655,7 @@ export default function Home() {
         <div className="container mx-auto max-w-4xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="rounded-2xl overflow-hidden shadow-2xl">
-              <img src={IMAGES.leadershipTeam} alt="Florida Solar Sales Academy team" className="w-full h-[380px] object-cover" />
+              <img src={IMAGES.leadershipTeam} alt={`${BRAND_NAME} team`} className="w-full h-[380px] object-cover" />
             </div>
             <div>
               <p className="text-primary font-semibold mb-3 uppercase tracking-wide text-sm">About Us</p>
@@ -646,7 +664,7 @@ export default function Home() {
                 We spent years watching talented people get placed in the wrong roles with no training, no mentorship, and no real path forward. They'd burn out in 90 days and the company would start over.
               </p>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Florida Solar Sales Academy was built to fix that. We use structured interviews, qualification scoring, and a real onboarding system to make sure every person we bring on has what it takes — and every person we bring on gets what they need to succeed.
+                {BRAND_NAME} was built to fix that. We use structured interviews, qualification scoring, and a real onboarding system to make sure every person we bring on has what it takes — and every person we bring on gets what they need to succeed.
               </p>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 We don't just fill seats. We build careers.
@@ -666,7 +684,7 @@ export default function Home() {
         <div className="relative z-10 container mx-auto max-w-3xl text-center space-y-6">
           <h2 className="text-4xl md:text-5xl font-bold text-white">Ready to Build Your Future?</h2>
           <p className="text-lg text-white/90 leading-relaxed">
-            Join hundreds of solar professionals earning six figures, building their teams, and making a real impact on Florida's clean energy future. No experience required. Just bring the drive.
+            Join hundreds of solar professionals earning six figures, building their teams, and making a real impact on America&apos;s clean energy future. No experience required. Just bring the drive.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button size="lg" onClick={() => navigate("/apply")} className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6 font-bold">
@@ -682,28 +700,30 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <Link href="/" className="text-xl font-bold text-primary flex items-center gap-2 mb-4 hover:opacity-90 transition">
-                <Sun className="h-6 w-6" /> Florida Solar Sales Academy
+                <Sun className="h-6 w-6" /> {BRAND_NAME}
               </Link>
-              <p className="text-sm text-muted-foreground">Building the next generation of solar energy professionals across Florida.</p>
+              <p className="text-sm text-muted-foreground">Building the next generation of solar energy professionals across the United States.</p>
             </div>
             <div>
               <h4 className="font-bold mb-4">Locations</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Tampa, FL</li>
-                <li className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Miami, FL</li>
-                <li className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Fort Lauderdale, FL</li>
+              <ul className="space-y-2 text-sm text-muted-foreground max-h-48 overflow-y-auto pr-1">
+                {MARKET_TERRITORIES.map((t) => (
+                  <li key={t} className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3 shrink-0" /> {t.replace(" - ", " — ")}
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2"><Mail className="h-3 w-3" /> info@floridasolarsalesacademy.com</li>
+                <li className="flex items-center gap-2"><Mail className="h-3 w-3" /> info@nationalsolarsalesacademy.com</li>
                 <li className="flex items-center gap-2"><Phone className="h-3 w-3" /> (888) 555-SOLAR</li>
               </ul>
             </div>
           </div>
           <div className="border-t border-border pt-8 text-center text-muted-foreground text-sm">
-            <p>&copy; 2026 Florida Solar Sales Academy. All rights reserved. | Serving Tampa, Miami, and Fort Lauderdale</p>
+            <p>&copy; 2026 {BRAND_NAME}. All rights reserved. | Serving metro markets across FL, TX, SC, NC &amp; GA</p>
           </div>
         </div>
       </footer>

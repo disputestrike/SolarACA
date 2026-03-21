@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BRAND_NAME } from "@shared/markets";
 import { createPermissionProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { interviews, applicants } from "../../drizzle/schema";
@@ -64,7 +65,7 @@ export const interviewsRouter = router({
         if (applicant[0].phone) {
           await sendSMS(
             applicant[0].phone,
-            `Great news ${applicant[0].firstName}! Your interview with Florida Solar Sales Academy is scheduled for ${dateStr} at ${timeStr}. Reply CONFIRM to confirm or call us if you have questions.`
+            `Great news ${applicant[0].firstName}! Your interview with ${BRAND_NAME} is scheduled for ${dateStr} at ${timeStr}. Reply CONFIRM to confirm or call us if you have questions.`
           );
         }
 
@@ -72,8 +73,8 @@ export const interviewsRouter = router({
         if (applicant[0].email) {
           await sendEmail(
             applicant[0].email,
-            "Interview Scheduled - Florida Solar Sales Academy",
-            `Hi ${applicant[0].firstName},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: ${dateStr}\nTime: ${timeStr}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\nFlorida Solar Sales Academy Team`
+            `Interview Scheduled - ${BRAND_NAME}`,
+            `Hi ${applicant[0].firstName},\n\nCongratulations! Your interview has been scheduled for:\n\nDate: ${dateStr}\nTime: ${timeStr}\nLocation: Virtual (Zoom link will be sent separately)\n\nPlease confirm your attendance by replying to this email.\n\nBest regards,\n${BRAND_NAME} Team`
           );
         }
       }
@@ -254,7 +255,7 @@ export const interviewsRouter = router({
       if ((input.reminderType === "sms" || input.reminderType === "both") && applicant[0].phone) {
         await sendSMS(
           applicant[0].phone,
-          `Reminder ${applicant[0].firstName}: Your interview with Florida Solar Sales Academy is on ${dateStr} at ${timeStr}. Looking forward to meeting you!`
+          `Reminder ${applicant[0].firstName}: Your interview with ${BRAND_NAME} is on ${dateStr} at ${timeStr}. Looking forward to meeting you!`
         );
       }
 
@@ -262,8 +263,8 @@ export const interviewsRouter = router({
       if ((input.reminderType === "email" || input.reminderType === "both") && applicant[0].email) {
         await sendEmail(
           applicant[0].email,
-          "Interview Reminder - Florida Solar Sales Academy",
-          `Hi ${applicant[0].firstName},\n\nThis is a friendly reminder that your interview with Florida Solar Sales Academy is scheduled for ${dateStr} at ${timeStr}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\nFlorida Solar Sales Academy Team`
+          `Interview Reminder - ${BRAND_NAME}`,
+          `Hi ${applicant[0].firstName},\n\nThis is a friendly reminder that your interview with ${BRAND_NAME} is scheduled for ${dateStr} at ${timeStr}.\n\nWe're looking forward to meeting you and discussing your opportunity to build a career in solar energy.\n\nBest regards,\n${BRAND_NAME} Team`
         );
       }
 
