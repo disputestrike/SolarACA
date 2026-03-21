@@ -13,10 +13,22 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link } from "wouter";
-import { Loader2, Mail, Phone, FileText, MapPin, LogOut, Shield } from "lucide-react";
+import { Loader2, Mail, Phone, FileText, MapPin, LogOut, Shield, Trash2 } from "lucide-react";
 import {
   formatApplicantLocation,
   marketsGroupedByState,
@@ -53,6 +65,15 @@ export default function Dashboard() {
   );
 
   const statsQuery = trpc.applicants.stats.useQuery(undefined, { enabled: isRecruiter });
+
+  const purgeMutation = trpc.applicants.purgeAllPipelineData.useMutation({
+    onSuccess: () => {
+      toast.success("All applicants, pipeline records, and waitlist signups were deleted.");
+      void applicantsQuery.refetch();
+      void statsQuery.refetch();
+    },
+    onError: (err) => toast.error(err.message || "Could not clear data"),
+  });
 
   if (!isAuthenticated) {
     return (
@@ -112,12 +133,44 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {Boolean(user?.effectivePermissions?.["admins.manage"]) && (
-                <Button variant="outline" className="border-border" asChild>
-                  <Link href="/dashboard/settings">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Team &amp; permissions
-                  </Link>
-                </Button>
+                <>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={purgeMutation.isPending}>
+                        {purgeMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-2" />
+                        )}
+                        Clear recruiting data
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete all applicant and waitlist data?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This permanently removes every applicant, interview, offer, communication log entry, and talent
+                          waitlist signup. This cannot be undone — use it to reset after testing.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => purgeMutation.mutate()}
+                        >
+                          Delete everything
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button variant="outline" className="border-border" asChild>
+                    <Link href="/dashboard/settings">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Team &amp; permissions
+                    </Link>
+                  </Button>
+                </>
               )}
               <Button onClick={() => logout()} variant="outline" className="border-border">
                 <LogOut className="h-4 w-4 mr-2" />

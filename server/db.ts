@@ -3,8 +3,16 @@ import { ENV } from "./_core/env";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import type { User } from "../drizzle/schema";
-import { InsertUser, users, staffGrants, talentInterest } from "../drizzle/schema";
-import { applicants } from "../drizzle/schema";
+import {
+  InsertUser,
+  users,
+  staffGrants,
+  talentInterest,
+  applicants,
+  communicationLog,
+  interviews,
+  jobOffers,
+} from "../drizzle/schema";
 
 /** DB missing new columns/tables after deploy (migrations not applied yet). */
 function isRecoverableSchemaError(err: unknown): boolean {
@@ -437,6 +445,20 @@ export async function getApplicantStats() {
     hired: countByStatus("hired"),
     rejected: countByStatus("rejected"),
   };
+}
+
+/**
+ * Delete all recruiting pipeline rows (communications → interviews → offers → applicants) and talent waitlist.
+ * Caller must enforce super-admin only. Use to clear test data.
+ */
+export async function purgeAllRecruitingPipelineData(): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(communicationLog).where(sql`1 = 1`);
+  await db.delete(interviews).where(sql`1 = 1`);
+  await db.delete(jobOffers).where(sql`1 = 1`);
+  await db.delete(applicants).where(sql`1 = 1`);
+  await db.delete(talentInterest).where(sql`1 = 1`);
 }
 
 

@@ -39,7 +39,7 @@ const testimonials = [
     title: "Sales Manager",
     city: "TX — Dallas",
     earnings: "$220k+",
-    quote: "The commission structure is transparent and generous. I've built real wealth doing work I believe in.",
+    quote: "The earning structure is transparent and generous. I've built real wealth doing work I believe in.",
   },
   {
     name: "David Rodriguez",
@@ -154,11 +154,11 @@ const faqs = [
   },
   {
     q: "Is this a job or am I starting my own business?",
-    a: `This is a career position with ${BRAND_NAME}. You are part of our team — not a contractor starting from scratch. You get full training, a mentor, a defined territory, and a compensation structure from day one. You earn uncapped commission, meaning your results directly determine your income.`,
+    a: `This is a career position with ${BRAND_NAME}. You are part of our team — not a contractor starting from scratch. You get full training, a mentor, a defined territory, and support from day one. Your effort and results drive what you earn.`,
   },
   {
     q: "How fast can I start earning?",
-    a: "Most reps close their first deal within the first 3 weeks of hitting the field. Our 2-week paid training gets you ready fast. Year 1 realistic target is $80k-$120k. By year 2-3, top performers hit $200k+.",
+    a: "Most reps close their first deal within the first 3 weeks of hitting the field. Our intensive two-week onboarding and training gets you ready fast. Year 1 realistic target is $80k-$120k. By year 2-3, top performers hit $200k+.",
   },
   {
     q: "What cities do you operate in?",
@@ -166,11 +166,11 @@ const faqs = [
   },
   {
     q: "What does the training look like?",
-    a: "Two weeks of structured paid training covering solar technology, our proven sales system, objection handling, and field ride-alongs with senior reps. After training, you are paired with a personal mentor for your first 90 days.",
+    a: "Two weeks of structured training covering solar technology, our proven sales system, objection handling, and field ride-alongs with senior reps. After training, you are paired with a personal mentor for your first 90 days.",
   },
   {
-    q: "What is the commission structure?",
-    a: "Commission-based with no ceiling. Reps earn a percentage of each deal closed, plus override commissions as they build and lead their own team. The more you sell and the more you grow your team, the higher your earnings.",
+    q: "How does compensation work?",
+    a: "Compensation is tied to results — there is no artificial ceiling. You earn on closed deals, with additional upside as you grow and lead a team. The more you produce and the more you help others succeed, the higher your earnings can go.",
   },
 ];
 
@@ -252,7 +252,7 @@ export default function Home() {
             </div>
             <div className="flex flex-wrap gap-6 pt-4 text-white/80 text-sm">
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> FL · TX · SC · NC · GA</div>
-              <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Uncapped Commission</div>
+              <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Performance-based earnings</div>
             </div>
           </div>
         </div>
@@ -295,7 +295,7 @@ export default function Home() {
             <Card className="p-8 border-border hover:border-primary/50 transition-all flex flex-col h-full">
               <h3 className="text-2xl font-bold text-primary mb-2">Sales Rep</h3>
               <p className="text-muted-foreground mb-6 flex-1 leading-relaxed">
-                Master our system, work your market, and earn uncapped commission with a mentor in your corner from day one.
+                Master our system, work your market, and build performance-based income with a mentor in your corner from day one.
               </p>
               <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/apply?track=rep")}>
                 Apply as Sales Rep <ArrowRight className="ml-2 h-4 w-4" />
@@ -361,7 +361,7 @@ export default function Home() {
               </h3>
               <ul className="space-y-4">
                 {[
-                  "Uncapped commission — your effort directly equals your income",
+                  "Performance-based income — your effort directly shapes what you earn",
                   "Clear path to $100k year 1, $200k+ by year 2-3",
                   "Build your own team and earn overrides on their production",
                   "Be your own boss — manage your schedule and territory",
@@ -410,7 +410,7 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: <Brain className="h-8 w-8 text-primary" />, title: "2-Week Paid Training", desc: "Solar technology, our proven sales system, objection handling, and field ride-alongs. You'll be ready to close before you finish." },
+              { icon: <Brain className="h-8 w-8 text-primary" />, title: "2-Week Onboarding & Training", desc: "Solar technology, our proven sales system, objection handling, and field ride-alongs. You'll be ready to close before you finish." },
               { icon: <Users className="h-8 w-8 text-primary" />, title: "Personal Mentor (90 Days)", desc: "Every new hire is paired with a senior rep. You're never alone in the field. Ask anything, anytime." },
               { icon: <TrendingUp className="h-8 w-8 text-primary" />, title: "Clear Leadership Path", desc: "Rep → Senior Rep → Team Lead → Regional Manager. We promote from within. Your ceiling is how high you want to go." },
               { icon: <Shield className="h-8 w-8 text-primary" />, title: "Proven Sales System", desc: "A tested, repeatable process for finding prospects, presenting solar, handling objections, and closing deals — no guessing." },
@@ -587,7 +587,7 @@ export default function Home() {
             <Card className="p-8 border-border hover:border-primary/50 hover:shadow-lg transition-all">
               <p className="text-6xl font-bold text-primary mb-2">$300k+</p>
               <p className="text-lg font-semibold mb-2">Leadership Potential</p>
-              <p className="text-sm text-muted-foreground">Team leaders and regional managers with override commissions</p>
+              <p className="text-sm text-muted-foreground">Team leaders and regional managers with leadership upside</p>
             </Card>
           </div>
         </div>
@@ -602,7 +602,7 @@ export default function Home() {
             {[
               { step: 1, title: "Apply (5 minutes)", desc: "Complete our quick application. No solar experience required. Just tell us about yourself and your goals." },
               { step: 2, title: "Interview & Offer (24-48 hours)", desc: "We move fast. You will hear from us within 24-48 hours to schedule a call, meet the team, and review your offer." },
-              { step: 3, title: "Train, Launch & Earn (Week 1-3)", desc: "Two weeks of paid training with your mentor, then hit the field. Most reps close their first deal within week 3." },
+              { step: 3, title: "Train, Launch & Earn (Week 1-3)", desc: "Two weeks of hands-on training with your mentor, then hit the field. Most reps close their first deal within week 3." },
             ].map((item) => (
               <div key={item.step} className="flex gap-6 items-start">
                 <div className="flex-shrink-0">

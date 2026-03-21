@@ -11,6 +11,7 @@ import {
   updateApplicantQualificationScore,
   updateApplicantResumeUrl,
   getApplicantEmailStatsMap,
+  purgeAllRecruitingPipelineData,
 } from "../db";
 import { ENV } from "../_core/env";
 import { mimeTypeForResumeFileName, sanitizeResumeFileName } from "../resumeMime";
@@ -21,6 +22,7 @@ import { messageTemplates, replaceTemplateVariables } from "./communications";
 
 const applicantsView = createPermissionProcedure("applicants.view");
 const applicantsEditStatus = createPermissionProcedure("applicants.edit_status");
+const adminsManage = createPermissionProcedure("admins.manage");
 
 export const applicantsRouter = router({
   // Submit a new application with optional resume
@@ -184,5 +186,11 @@ export const applicantsRouter = router({
   stats: applicantsView.query(async () => {
     const stats = await getApplicantStats();
     return stats;
+  }),
+
+  /** Super-admin only: delete all applicants, related pipeline rows, and talent waitlist (test reset). */
+  purgeAllPipelineData: adminsManage.mutation(async () => {
+    await purgeAllRecruitingPipelineData();
+    return { success: true as const };
   }),
 });
