@@ -180,6 +180,7 @@ export default function Apply() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">Join {BRAND_NAME}</h1>
           <p className="text-muted-foreground">Start your journey to financial freedom and leadership</p>
+          <p className="text-sm text-primary font-medium mt-2">Commission paid weekly — every Friday.</p>
         </div>
 
         {/* Progress Bar */}
@@ -333,6 +334,7 @@ export default function Apply() {
                 <p className="text-sm font-semibold">What we're looking for:</p>
                 <ul className="text-sm text-foreground space-y-1">
                   <li>✓ Drive to earn significant income</li>
+                  <li>✓ Weekly commission pay (Friday schedule)</li>
                   <li>✓ Interest in building a team</li>
                   <li>✓ Commitment to learning</li>
                   <li>✓ Passion for clean energy</li>

@@ -14,7 +14,26 @@ import {
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
-import { ArrowRight, Zap, Leaf, TrendingUp, Users, Sun, MapPin, DollarSign, Shield, Brain, Phone, Mail, CheckCircle, XCircle, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  Zap,
+  Leaf,
+  TrendingUp,
+  Users,
+  Sun,
+  MapPin,
+  DollarSign,
+  Shield,
+  Brain,
+  Phone,
+  Mail,
+  CheckCircle,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  CalendarDays,
+} from "lucide-react";
 import { useState } from "react";
 import { BRAND_NAME, MARKET_TERRITORIES, MARKET_TERRITORY_COUNT, marketsGroupedByState, type WaitlistCity } from "@shared/markets";
 
@@ -172,6 +191,10 @@ const faqs = [
     q: "How does compensation work?",
     a: "Compensation is tied to results — there is no artificial ceiling. You earn on closed deals, with additional upside as you grow and lead a team. The more you produce and the more you help others succeed, the higher your earnings can go.",
   },
+  {
+    q: "When do I get paid?",
+    a: "Commission is paid weekly on a Friday schedule — so you see money in your account regularly throughout the month, not just once at month-end.",
+  },
 ];
 
 function FAQItem({ q, a }: { q: string; a: string }) {
@@ -234,6 +257,9 @@ export default function Home() {
               <div className="inline-block bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold border border-white/30">
                 ✓ No Solar Experience Required
               </div>
+              <div className="inline-block bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold border border-white/30">
+                <span className="opacity-95">Weekly commission · Paid every Friday</span>
+              </div>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-white leading-tight">
               Build Your Future in <span className="text-primary">Solar Energy</span>
@@ -253,6 +279,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-6 pt-4 text-white/80 text-sm">
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> FL · TX · SC · NC · GA</div>
               <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Performance-based earnings</div>
+              <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" /> Commission paid weekly (Fridays)</div>
             </div>
           </div>
         </div>
@@ -415,6 +442,7 @@ export default function Home() {
               { icon: <TrendingUp className="h-8 w-8 text-primary" />, title: "Clear Leadership Path", desc: "Rep → Senior Rep → Team Lead → Regional Manager. We promote from within. Your ceiling is how high you want to go." },
               { icon: <Shield className="h-8 w-8 text-primary" />, title: "Proven Sales System", desc: "A tested, repeatable process for finding prospects, presenting solar, handling objections, and closing deals — no guessing." },
               { icon: <Zap className="h-8 w-8 text-primary" />, title: "Live Weekly Coaching", desc: "Group coaching sessions every week covering objection handling, deal reviews, and market updates to keep you sharp." },
+              { icon: <CalendarDays className="h-8 w-8 text-primary" />, title: "Weekly Commission Pay", desc: "Commission runs weekly on a Friday pay schedule — so you get paid often and can count on regular cash flow from your deals." },
               { icon: <Leaf className="h-8 w-8 text-primary" />, title: "Work You Believe In", desc: "Help homeowners slash their energy bills and go green. Every sale makes a real difference — and you'll know it." },
             ].map((item, i) => (
               <Card key={i} className="p-8 border-border hover:border-primary/50 hover:shadow-lg transition-all group">
